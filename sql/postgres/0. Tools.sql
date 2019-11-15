@@ -1,5 +1,6 @@
 create schema if not exists tools;
 
+
 create or replace function tools.exists_type(typename name)
 returns bool as $$ begin
   return exists(
@@ -11,6 +12,7 @@ returns bool as $$ begin
       and n.nspname = 'types'
   );
 end; $$ language plpgsql;
+
 
 create or replace function tools.is_chat_private(chat_id integer)
     returns bool
@@ -25,6 +27,7 @@ begin
   );
 end;
 $$ language plpgsql;
+
 
 create or replace function tools.exists_reference(
   reference_name information_schema.sql_identifier
@@ -50,6 +53,7 @@ returns bool immutable as
     return ((employment_start < employment_end) AND ((NOT is_user_dead) OR (employment_end <= now()))); -- (emp_start < emp_end) and (user_dead) -> (emp_end <= now())
 end; $$ language plpgsql;
 
+
 create or replace function tools.is_inventory_item_valid_for_sale(
   item_id int
 )
@@ -57,4 +61,14 @@ returns bool immutable as
   $$
   begin
     return (select is_consumable from inventory.inventory_items where id = item_id);
+end; $$ language plpgsql;
+
+
+create or replace function tools.can_staff_make_item_request(staff_id int)
+returns bool immutable as $$ begin
+  return exists(
+    select *
+    from usr.users_roles as ur
+    where ur.is_doctor or ur.is_nurse or ur.is_lab_technician or ur.is_admin
+  );
 end; $$ language plpgsql;

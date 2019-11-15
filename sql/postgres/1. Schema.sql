@@ -61,7 +61,7 @@ create table if not exists usr.staff
   id               int primary key references usr.users
 , hired_by         int            not null
 , employment_start date           not null
-, employment_end   date           null
+, employment_end   date           null check ( tools.is_employment_end_valid(id, employment_start, employment_end))
 , salary           decimal        not null
 , schedule_type    types.Schedule not null
 );

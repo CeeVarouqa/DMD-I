@@ -32,9 +32,9 @@ end $$;
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
--- usr.user
+-- usr.users
 -------------------------------------------------------------------------------
-create table if not exists usr.user
+create table if not exists usr.users
 (
   id                serial primary key,
   first_name        varchar(255) not null,
@@ -55,7 +55,7 @@ create table if not exists usr.user
 -------------------------------------------------------------------------------
 create table if not exists usr.staff
 (
-  id               int primary key references usr.user,
+  id               int primary key references usr.users,
   hired_by         int      not null,
   employment_start date     not null,
   employment_end   date     null,
@@ -65,9 +65,9 @@ create table if not exists usr.staff
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
--- usr.hr
+-- usr.hrs
 -------------------------------------------------------------------------------
-create table if not exists usr.hr
+create table if not exists usr.hrs
 (
   id int primary key references usr.staff
 );
@@ -77,63 +77,97 @@ do $$ begin
     alter table usr.staff
     add constraint usr_staff_hired_by_usr_hr
     foreign key (hired_by)
-    references usr.hr(id);
+    references usr.hrs(id);
   end if;
 end $$;
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
--- usr.doctor
+-- usr.doctors
 -------------------------------------------------------------------------------
-create table if not exists usr.doctor
+create table if not exists usr.doctors
 (
-  id int primary key references usr.staff,
-
+  id int primary key references usr.staff
+  , specialization types.DoctorSpecialization not null
+--   , clinc_number not null
 );
 -------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- usr.nurses
+-------------------------------------------------------------------------------
+create table if not exists usr.nurses
+(
+  id int primary key references usr.staff
+);
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- usr.doctors_nurses
+-------------------------------------------------------------------------------
+-- create table if not exists usr.doctors_nurses
+-- (
+--   id serial primary key,
+--
+-- );
+-------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- Chats
 -------------------------------------------------------------------------------
 create schema if not exists msg;
 
-create table if not exists msg.chat
+-------------------------------------------------------------------------------
+-- msg.chat
+-------------------------------------------------------------------------------
+create table if not exists msg.chats
 (
     id   serial primary key,
     name varchar(255)   not null unique,
     chat_type types.ChatType not null
 );
+-------------------------------------------------------------------------------
 
-create table if not exists msg.message
+-------------------------------------------------------------------------------
+-- msg.message
+-------------------------------------------------------------------------------
+create table if not exists msg.messages
 (
-    id           serial primary key,
-    content_type types.ContentType not null,
-    content      varchar(255)      not null,
-    datetime     timestamp         not null,
-    sent_by      integer references usr.user (id) not null,
-    sent_to      integer references msg.chat (id) not null
+  id           serial primary key,
+  content_type types.ContentType not null,
+  content      varchar(255)      not null,
+  datetime     timestamp         not null,
+  sent_by      integer references usr.users (id) not null,
+  sent_to      integer references msg.chats (id) not null
+);
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- msg.participate
+-------------------------------------------------------------------------------
+create table if not exists msg.chats_participants
+(
+  id                              serial primary key,
+  chat_id                         integer references msg.chats (id) not null,
+  user_id                         integer references usr.users (id),
+  private_chat_participant_number boolean
 );
 
-create table if not exists msg.participate
-(
-    id                              serial primary key,
-    chat_id                         integer references msg.chat (id) not null,
-    user_id                         integer references usr.user (id),
-    private_chat_participant_number boolean
-);
+create unique index participate_private on msg.chats_participants (chat_id, private_chat_participant_number) where (
+  tools.is_chat_private(chat_id));
+-------------------------------------------------------------------------------
 
-create unique index participate_private on msg.participate (chat_id, private_chat_participant_number) where (
-    tools.is_chat_private(chat_id));
 
 -------------------------------------------------------------------------------
 -- Log
 -------------------------------------------------------------------------------
 create schema if not exists logging;
 
-create table if not exists logging.log(
-    id serial primary key,
-    date timestamp not null,
-    text text not null,
-    performed_by integer references usr.user(id)
+create table if not exists logging.logs
+(
+  id serial primary key,
+  date timestamp not null,
+  text text not null,
+  performed_by integer references usr.users(id)
 );
--------------------------------------------------------------------------------

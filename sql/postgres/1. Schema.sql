@@ -444,14 +444,14 @@ create table if not exists finance.payments
 
 
 -------------------------------------------------------------------------------
--- Meetings
+-- meeting
 -------------------------------------------------------------------------------
-create schema if not exists meetings;
+create schema if not exists meeting;
 
 -------------------------------------------------------------------------------
--- meetings.appointments
+-- meeting.appointments
 -------------------------------------------------------------------------------
-create table if not exists meetings.appointments
+create table if not exists meeting.appointments
 (
   id         serial primary key
 , doctor_id  int references usr.doctors  not null
@@ -467,9 +467,9 @@ create table if not exists meetings.appointments
 );
 
 -------------------------------------------------------------------------------
--- meetings.redirection
+-- meeting.redirection
 -------------------------------------------------------------------------------
-create table if not exists meetings.redirections
+create table if not exists meeting.redirections
 (
   id         serial primary key
 , issue_date date not null
@@ -483,9 +483,9 @@ create table if not exists meetings.redirections
 );
 
 -------------------------------------------------------------------------------
--- meetings.in_patient_direction
+-- meeting.in_patient_direction
 -------------------------------------------------------------------------------
-create table if not exists meetings.in_patient_directions
+create table if not exists meeting.in_patient_directions
 (
   id         serial primary key
 , issue_date date                             not null

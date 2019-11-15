@@ -89,6 +89,21 @@ $$
         , 'Secondary'
       );
     end if;
+
+    if not tools.exists_type('AnalysisType') then
+      create type types.AnalysisType as enum (
+          'Blood'
+        , 'Urine'
+        , 'Fecal'
+      );
+    end if;
+
+    if not tools.exists_type('AnalysisStatus') then
+      create type types.AnalysisStatus as enum (
+          'Collected'
+        , 'Proceeded'
+      );
+    end if;
   end
 $$;
 
@@ -617,3 +632,21 @@ create table if not exists medical_data.ambulance_calls
 , assigned_invoice int       not null references finance.invoices (id)
 , is_made_by       int       not null references usr.patients (id)
 );
+
+-------------------------------------------------------------------------------
+-- medical_data.analyses
+-------------------------------------------------------------------------------
+create table if not exists medical_data.analyses
+(
+  id                 serial primary key
+, type               types.AnalysisType   not null
+, status             types.AnalysisStatus not null default 'Collected'
+, result             text
+, assigned_invoice   int                  not null references finance.invoices(id)
+, proceeded_by       int                  null references usr.lab_technicians (id)
+, requested_by       int                  not null references usr.patients (id)
+, datetime_collected timestamp            not null default now() check (datetime_collected <= now())
+, datetime_proceeded timestamp            null
+    check ((status = 'Proceeded') and ((datetime_proceeded is not null) and (datetime_proceeded > datetime_collected))
+      or (status = 'Collected') and datetime_proceeded is null)
+)

@@ -439,7 +439,7 @@ create table if not exists finance.payments
 , insurance_company varchar(255) check ( type = 'Insurance' AND insurance_company is not null )
 , insurance_number  varchar(255) check ( type = 'Insurance' AND insurance_number is not null )
 , accepted_by       int references usr.receptionists (id)
-, pays_for          int references finance.invoices (id)
+, pays_for          int references finance.invoices (id) unique
 );
 
 
@@ -459,7 +459,7 @@ create table if not exists meeting.appointments
 , datetime   timestamp                   not null
 , location   varchar(255)                not null
 , invoice_id int                         not null
-    references finance.invoices
+    references finance.invoices unique
 
 , unique (doctor_id, datetime)
 , unique (patient_id, datetime)
@@ -629,7 +629,7 @@ create table if not exists medical_data.ambulance_calls
 , location         point     not null
 , datetime         timestamp not null default now() check ( datetime < now() )
 , assigned_group   int       not null references usr.paramedic_groups (id)
-, assigned_invoice int       not null references finance.invoices (id)
+, assigned_invoice int       not null references finance.invoices (id) unique
 , is_made_by       int       not null references usr.patients (id)
 );
 

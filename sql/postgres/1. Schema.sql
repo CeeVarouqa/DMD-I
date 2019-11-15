@@ -155,7 +155,7 @@ create table if not exists usr.lab_technicians
 );
 
 
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------------is_employment_end_valid
 -- usr.receptionists
 -------------------------------------------------------------------------------
 create table if not exists usr.receptionists
@@ -207,7 +207,7 @@ create table if not exists msg.messages
   id           serial primary key
 , content_type types.ContentType                 not null
 , content      varchar(255)                      not null
-, datetime     timestamp                         not null
+, datetime     timestamp                         not null check ( datetime <= now() )
 , sent_by      integer references usr.users (id) not null
 , sent_to      integer references msg.chats (id) not null
 );
@@ -239,7 +239,7 @@ create schema if not exists logging;
 create table if not exists logging.logs
 (
   id           serial primary key
-, date         timestamp not null
+, date         timestamp not null check ( date <= now() )
 , text         text      not null
 , performed_by integer references usr.users (id)
 );
@@ -257,7 +257,7 @@ create table if not exists board.messages
 (
   id     serial primary key
 , text   text not null
-, expiry date default now() + interval '10 day'
+, expiry date default now() + interval '10 day' check ( expiry > now() )
 );
 
 
@@ -267,7 +267,7 @@ create table if not exists board.messages
 create table if not exists board.modifications
 (
   id          serial primary key
-, date     date default now()
+, datetime    timestamp default now() check ( datetime <= now() )
 , change      text                               not null
 , change_type types.ChangeType                   not null
 , modifies    int references board.messages (id) not null
@@ -286,7 +286,7 @@ create schema if not exists service;
 create table if not exists service.redirections
 (
   id         serial primary key
-, issue_date date default now()
+, issue_date date default now() check ( issue_date <= now() )
 , directs_to int references usr.doctors (id)  not null
 , is_made_by int references usr.doctors (id)  not null
 , directs    int references usr.patients (id) not null
@@ -298,7 +298,7 @@ create table if not exists service.redirections
 create table if not exists service.in_patient_directions
 (
   id         serial primary key
-, issue_date date default now()
+, issue_date date default now() check ( issue_date <= now() )
 , is_made_by int references usr.doctors (id)  not null
 , directs    int references usr.patients (id) not null
 );

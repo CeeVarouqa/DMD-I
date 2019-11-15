@@ -302,3 +302,40 @@ create table if not exists service.in_patient_directions
 , is_made_by int references usr.doctors (id)  not null
 , directs    int references usr.patients (id) not null
 );
+
+
+-------------------------------------------------------------------------------
+-- Medical data
+-------------------------------------------------------------------------------
+create schema if not exists medical_data;
+
+-------------------------------------------------------------------------------
+-- medical_data.medical_records
+-------------------------------------------------------------------------------
+create table if not exists medical_data.medical_records
+(
+  id         serial primary key
+, content    text                             not null
+, belongs_to int references usr.patients (id) not null
+);
+
+-------------------------------------------------------------------------------
+-- medical_data.medical_record_modifications
+-------------------------------------------------------------------------------
+create table if not exists medical_data.medical_record_modifications
+(
+  id          serial primary key
+, change      text                          not null
+, change_type types.ChangeType              not null
+, date        date default now() check ( date <= now() )
+, is_made_by  int references usr.staff (id) not null
+);
+
+-------------------------------------------------------------------------------
+-- medical_data.prescriptions
+-------------------------------------------------------------------------------
+create table if not exists medical_data.prescriptions
+(
+  id serial primary key
+, issue_date date default now() check ( issue_date <= now() )
+)

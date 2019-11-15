@@ -64,6 +64,7 @@ $$
         , 'Hospital stationary item'
         , 'Electronic device'
         , 'Pharmacy item'
+        , 'In-patient clinic inventory'
       );
     end if;
 
@@ -496,6 +497,22 @@ create table if not exists service.in_patient_directions
     references usr.patients (id)
 );
 
+
+-------------------------------------------------------------------------------
+-- In-patient clinic
+-------------------------------------------------------------------------------
+create schema if not exists ipc;
+
+-------------------------------------------------------------------------------
+-- ipc.in_patient_clinic_places
+-------------------------------------------------------------------------------
+-- create table if not exists ipc.in_patient_clinic_places
+-- (
+--   id serial primary key
+-- , room varchar(32) not null
+-- );
+
+
 -------------------------------------------------------------------------------
 -- Inventory
 -------------------------------------------------------------------------------
@@ -514,8 +531,10 @@ create table if not exists inventory.inventory_items
 , is_consumable     bool                        not null
 , category          types.InventoryItemCategory not null
 , need_prescription bool                        not null
+, belongs_to_place  int                         null references ipc.in_patient_clinic_places
 
 , unique (category, name)
+, check ((category = 'In-patient clinic inventory') = (belongs_to_place is not null))
 );
 
 -------------------------------------------------------------------------------
@@ -557,16 +576,6 @@ create table if not exists inventory.item_sales
 , invoice_id    int            not null
     references finance.invoices
 );
-
-
--------------------------------------------------------------------------------
--- In-patient clinic
--------------------------------------------------------------------------------
-create schema if not exists ipc;
-
--------------------------------------------------------------------------------
--- ipc.in_patient_clinic_places
--------------------------------------------------------------------------------
 
 
 -------------------------------------------------------------------------------

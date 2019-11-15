@@ -653,11 +653,12 @@ create table if not exists medical_data.medical_records
 create table if not exists medical_data.medical_record_modifications
 (
   id          serial primary key
-, change      text                          not null
-, change_type types.ChangeType              not null
-, date        date                          not null
+, change      text                                        not null
+, change_type types.ChangeType                            not null
+, date        date                                        not null
     default now() check ( date <= now() )
-, is_made_by  int references usr.staff (id) not null
+, is_made_by  int references usr.staff (id)               not null
+, changes     int references medical_data.medical_records not null
 );
 
 -------------------------------------------------------------------------------
@@ -665,9 +666,10 @@ create table if not exists medical_data.medical_record_modifications
 -------------------------------------------------------------------------------
 create table if not exists medical_data.prescriptions
 (
-  id serial primary key
+  id         serial primary key
 , issue_date date not null
     default now() check ( issue_date <= now() )
+, belongs_to int references medical_data.medical_records (id)
 );
 
 -------------------------------------------------------------------------------

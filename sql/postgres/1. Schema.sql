@@ -32,7 +32,7 @@ $$
     end if;
   end
 $$;
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.users
@@ -51,7 +51,7 @@ create table if not exists usr.users
 
   constraint unique_insurance unique (insurance_company, insurance_number)
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.staff
@@ -65,7 +65,7 @@ create table if not exists usr.staff
 , salary           decimal        not null
 , schedule_type    types.Schedule not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.hrs
@@ -86,7 +86,7 @@ $$
     end if;
   end
 $$;
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.doctors
@@ -97,7 +97,7 @@ create table if not exists usr.doctors
 , specialization types.DoctorSpecialization not null
 -- , clinc_number not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.nurses
@@ -106,7 +106,7 @@ create table if not exists usr.nurses
 (
   id int primary key references usr.staff
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.doctors_nurses
@@ -117,7 +117,7 @@ create table if not exists usr.doctors_nurses
 , doctor_id int references usr.doctors not null
 , nurse_id  int references usr.nurses  not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.inventory_managers
@@ -126,7 +126,7 @@ create table if not exists usr.inventory_managers
 (
   id int primary key references usr.staff
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.pharmacists
@@ -135,7 +135,7 @@ create table if not exists usr.pharmacists
 (
   id int primary key references usr.staff
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.lab_technicians
@@ -144,7 +144,7 @@ create table if not exists usr.lab_technicians
 (
   id int primary key references usr.staff
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.receptionists
@@ -153,7 +153,7 @@ create table if not exists usr.receptionists
 (
   id int primary key references usr.staff
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.paramedics
@@ -163,7 +163,7 @@ create table if not exists usr.paramedics
   id int primary key references usr.staff
 -- , position
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.patients
@@ -172,7 +172,6 @@ create table if not exists usr.patients
 (
   id int primary key references usr.users
 );
--------------------------------------------------------------------------------
 
 
 -------------------------------------------------------------------------------
@@ -189,7 +188,7 @@ create table if not exists msg.chats
 , name      varchar(255)   not null unique
 , chat_type types.ChatType not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- msg.message
@@ -203,7 +202,7 @@ create table if not exists msg.messages
 , sent_by      integer references usr.users (id) not null
 , sent_to      integer references msg.chats (id) not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- msg.participate
@@ -218,7 +217,6 @@ create table if not exists msg.chats_participants
 
 create unique index participate_private on msg.chats_participants (chat_id, private_chat_participant_number) where (
   tools.is_chat_private(chat_id));
--------------------------------------------------------------------------------
 
 
 -------------------------------------------------------------------------------
@@ -236,7 +234,6 @@ create table if not exists logging.logs
 , text         text      not null
 , performed_by integer references usr.users (id)
 );
--------------------------------------------------------------------------------
 
 
 -------------------------------------------------------------------------------
@@ -253,7 +250,7 @@ create table if not exists board.messages
 , text   text not null
 , expiry date default now() + interval '10 day'
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- board.modifications

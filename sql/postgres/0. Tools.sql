@@ -49,3 +49,12 @@ returns bool immutable as
     select usr."user".is_dead into is_user_dead from usr."user" where id = user_id;
     return ((employment_start < employment_end) AND ((NOT is_user_dead) OR (employment_end <= now()))); -- (emp_start < emp_end) and (user_dead) -> (emp_end <= now())
 end; $$ language plpgsql;
+
+create or replace function tools.is_inventory_item_valid_for_sale(
+  item_id int
+)
+returns bool immutable as
+  $$
+  begin
+    return (select is_consumable from inventory.inventory_items where id = item_id);
+end; $$ language plpgsql;

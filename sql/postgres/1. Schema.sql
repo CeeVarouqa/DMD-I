@@ -333,6 +333,39 @@ create table if not exists service.in_patient_directions
 , directs    int references usr.patients (id) not null
 );
 
+-------------------------------------------------------------------------------
+-- Inventory
+-------------------------------------------------------------------------------
+create schema if not exists inventory;
+
+-------------------------------------------------------------------------------
+-- inventory.inventory_items
+-------------------------------------------------------------------------------
+create table if not exists inventory.inventory_items
+(
+  id                serial primary key
+, name              varchar(255)                not null
+, cost_per_unit     money                       not null
+, quantity          numeric(32, 6)              not null
+, units             types.UnitType              not null
+, is_consumable     bool                        not null
+, category          types.InventoryItemCategory not null
+, need_prescription bool                        not null
+
+);
+
+-- TODO: unique constraints
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- inventory.inventory_items
+-------------------------------------------------------------------------------
+-- create table if not exists inventory.inverntory_items_requests
+-- (
+--
+-- );
+-------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- Medical data
@@ -368,37 +401,15 @@ create table if not exists medical_data.prescriptions
 (
   id serial primary key
 , issue_date date default now() check ( issue_date <= now() )
-)
-
-
--------------------------------------------------------------------------------
--- Inventory
--------------------------------------------------------------------------------
-create schema if not exists inventory;
-
--------------------------------------------------------------------------------
--- inventory.inventory_items
--------------------------------------------------------------------------------
-create table if not exists inventory.inventory_items
-(
-  id                serial primary key
-, name              varchar(255)                not null
-, cost_per_unit     money                       not null
-, quantity          numeric(32, 6)              not null
-, units             types.UnitType              not null
-, is_consumable     bool                        not null
-, category          types.InventoryItemCategory not null
-, need_prescription bool                        not null
 );
 
--- TODO: unique constraints
 -------------------------------------------------------------------------------
+-- medical_data.prescription_allowances
+-------------------------------------------------------------------------------
+create table if not exists medical_data.prescription_allowances
+(
+  id                serial primary key
+, prescription_id   int references medical_data.prescriptions (id) not null
+, inventory_item_id int references inventory.inventory_items (id)  not null check ( tools.is_inventory_item_valid_for_sale(inventory_item_id) )
+)
 
--------------------------------------------------------------------------------
--- inventory.inventory_items
--------------------------------------------------------------------------------
--- create table if not exists inventory.inverntory_items_requests
--- (
---
--- );
--------------------------------------------------------------------------------

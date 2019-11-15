@@ -30,6 +30,22 @@ $$
         'Therapist'
       );
     end if;
+
+    if not tools.exists_type('UnitType') then
+      create type types.UnitType as enum (
+          'items'
+        , 'litres'
+        , 'grams'
+      );
+    end if;
+
+    if not tools.exists_type('InventoryItemCategory') then
+      create type types.InventoryItemCategory as enum (
+          'medicine'
+        , 'hospital stationary item'
+        , 'electronic device'
+      );
+    end if;
   end
 $$;
 -------------------------------------------------------------------------------
@@ -260,11 +276,11 @@ create table if not exists board.messages
 -------------------------------------------------------------------------------
 create table if not exists board.modifications
 (
-  id serial primary key
-, date date default now()
-, change text not null
+  id       serial primary key
+, date     date default now()
+, change   text                              not null
 , modifies int references board.messages(id) not null
-, made_by int references usr.staff(id) not null
+, made_by  int references usr.staff(id)      not null
 );
 -------------------------------------------------------------------------------
 
@@ -273,3 +289,49 @@ create table if not exists board.modifications
 -------------------------------------------------------------------------------
 create schema if not exists service;
 
+-------------------------------------------------------------------------------
+-- service.appointments
+-------------------------------------------------------------------------------
+create table if not exists service.appointments
+(
+  id         serial primary key
+, doctor_id  int references usr.doctors  not null
+, patient_id int references usr.patients not null
+, datetime   timestamp                   not null
+, location   varchar(255)                not null
+);
+
+-- TODO: add unique constraints
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- Inventory
+-------------------------------------------------------------------------------
+create schema if not exists inventory;
+
+-------------------------------------------------------------------------------
+-- inventory.inventory_items
+-------------------------------------------------------------------------------
+create table if not exists inventory.inventory_items
+(
+  id                serial primary key
+, name              varchar(255)                not null
+, cost_per_unit     money                       not null
+, quantity          numeric(32, 6)              not null
+, units             types.UnitType              not null
+, is_consumable     bool                        not null
+, category          types.InventoryItemCategory not null
+, need_prescription bool                        not null
+);
+
+-- TODO: unique constraints
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- inventory.inventory_items
+-------------------------------------------------------------------------------
+-- create table if not exists inventory.inverntory_items_requests
+-- (
+--
+-- );
+-------------------------------------------------------------------------------

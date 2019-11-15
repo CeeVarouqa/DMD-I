@@ -608,9 +608,12 @@ create table if not exists medical_data.prescription_allowances
 -------------------------------------------------------------------------------
 -- medical_data.ambulance_calls
 -------------------------------------------------------------------------------
-create table if not exists  medical_data.ambulance_calls
+create table if not exists medical_data.ambulance_calls
 (
-  id serial primary key
-, location point not null
-, datetime timestamp not null 
+  id               serial primary key
+, location         point     not null
+, datetime         timestamp not null default now() check ( datetime < now() )
+, assigned_group   int       not null references usr.paramedic_groups (id)
+, assigned_invoice int       not null references finance.invoices (id)
+, is_made_by       int       not null references usr.patients (id)
 );

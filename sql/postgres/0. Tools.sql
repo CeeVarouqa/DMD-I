@@ -60,7 +60,13 @@ create or replace function tools.is_inventory_item_valid_for_sale(
 returns bool immutable as
   $$
   begin
-    return (select is_consumable from inventory.inventory_items where id = item_id);
+    return exists(
+      select *
+      from inventory.inventory_items as ii
+      where ii.id            = item_id
+        and ii.is_consumable = true
+        and ii.category      = 'Pharmacy item'
+    );
 end; $$ language plpgsql;
 
 

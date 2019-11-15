@@ -96,7 +96,7 @@ create table if not exists usr.users
 , email             varchar(255) not null unique
 , hash_pass         varchar(64)  not null
 , birth_date        date         not null
-, is_dead           boolean default false
+, is_dead           bool default false
 , insurance_company varchar(255)
 , insurance_number  varchar(255),
 
@@ -293,11 +293,14 @@ create table if not exists msg.chats
 create table if not exists msg.messages
 (
   id           serial primary key
-, content_type types.ContentType                 not null
-, content      varchar(255)                      not null
-, datetime     timestamp                         not null check (datetime <= now())
-, sent_by      integer references usr.users (id) not null
-, sent_to      integer references msg.chats (id) not null
+, content_type types.ContentType not null
+, content      varchar(255)      not null
+, datetime     timestamp         not null
+    check (datetime <= now())
+, sent_by      int               not null
+    references usr.users (id)
+, sent_to      int               not null
+    references msg.chats (id)
 );
 
 
@@ -307,9 +310,11 @@ create table if not exists msg.messages
 create table if not exists msg.chats_participants
 (
   id                              serial primary key
-, chat_id                         integer references msg.chats (id) not null
-, user_id                         integer references usr.users (id)
-, private_chat_participant_number boolean
+, chat_id                         int not null
+    references msg.chats(id)
+, user_id                         int not null
+    references usr.users(id)
+, private_chat_participant_number bool
 );
 
 create unique index participate_private on msg.chats_participants (chat_id, private_chat_participant_number) where (
@@ -327,9 +332,11 @@ create schema if not exists logging;
 create table if not exists logging.logs
 (
   id           serial primary key
-, date         timestamp not null check ( date <= now() )
+, date         timestamp not null
+    check (date <= now())
 , text         text      not null
-, performed_by integer references usr.users (id)
+, performed_by int       not null
+    references usr.users (id)
 );
 
 
@@ -345,7 +352,8 @@ create table if not exists board.messages
 (
   id     serial primary key
 , text   text not null
-, expiry date default now() + interval '10 day' check ( expiry > now() )
+, expiry date not null
+    default now() + interval '10 day' check ( expiry > now() )
 );
 
 
@@ -392,10 +400,14 @@ create table if not exists service.appointments
 create table if not exists service.redirections
 (
   id         serial primary key
-, issue_date date default now() check ( issue_date <= now() )
-, directs_to int references usr.doctors (id)  not null
-, is_made_by int references usr.doctors (id)  not null
-, directs    int references usr.patients (id) not null
+, issue_date date not null
+    default now() check (issue_date <= now())
+, directs_to int not null
+    references usr.doctors (id)
+, is_made_by int not null
+    references usr.doctors (id)
+, directs    int not null
+    references usr.patients (id)
 );
 
 -------------------------------------------------------------------------------
@@ -404,9 +416,12 @@ create table if not exists service.redirections
 create table if not exists service.in_patient_directions
 (
   id         serial primary key
-, issue_date date default now() check ( issue_date <= now() )
-, is_made_by int references usr.doctors (id)  not null
-, directs    int references usr.patients (id) not null
+, issue_date date                             not null
+    default now() check ( issue_date <= now() )
+, is_made_by int                              not null
+    references usr.doctors (id)
+, directs    int                              not null
+    references usr.patients (id)
 );
 
 -------------------------------------------------------------------------------
@@ -459,7 +474,7 @@ create table if not exists inventory.item_sales
   id serial primary key
 , item_id      int not null
     references inventory.inventory_items
-    -- check (  )
+    check (tools.is_inventory_item_valid_for_sale(item_id))
 , units         types.UnitType not null
 , quantity      numeric(32, 6) not null
 , cost_per_unit money          not null
@@ -505,7 +520,8 @@ create table if not exists medical_data.medical_record_modifications
   id          serial primary key
 , change      text                          not null
 , change_type types.ChangeType              not null
-, date        date default now() check ( date <= now() )
+, date        date                          not null
+    default now() check ( date <= now() )
 , is_made_by  int references usr.staff (id) not null
 );
 
@@ -515,9 +531,9 @@ create table if not exists medical_data.medical_record_modifications
 create table if not exists medical_data.prescriptions
 (
   id serial primary key
-, issue_date date default now() check ( issue_date <= now() )
+, issue_date date not null
+    default now() check ( issue_date <= now() )
 );
-
 
 -------------------------------------------------------------------------------
 -- medical_data.prescription_allowances
@@ -525,6 +541,9 @@ create table if not exists medical_data.prescriptions
 create table if not exists medical_data.prescription_allowances
 (
   id                serial primary key
-, prescription_id   int references medical_data.prescriptions (id) not null
-, inventory_item_id int references inventory.inventory_items (id)  not null check ( tools.is_inventory_item_valid_for_sale(inventory_item_id) )
+, prescription_id   int not null
+    references medical_data.prescriptions(id)
+, inventory_item_id int not null
+    references inventory.inventory_items (id)
+    check (tools.is_inventory_item_valid_for_sale(inventory_item_id))
 );

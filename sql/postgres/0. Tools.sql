@@ -78,3 +78,36 @@ returns bool immutable as $$ begin
     where ur.is_doctor or ur.is_nurse or ur.is_lab_technician or ur.is_admin
   );
 end; $$ language plpgsql;
+
+
+create or replace function tools.can_patient_stay_at_in_patient_clinic(
+  new_patient_id         int,
+  new_place_id           int,
+  new_check_in_datetime  timestamp,
+  new_check_out_datetime timestamp
+)
+returns bool immutable as $$ begin
+  return not exists(
+    -- the given place is not occupied at the given time
+    -- or
+    -- the given person does not occupy some place at the given time
+    select *
+    from ipc.in_patient_clinic_stay as s
+    where (s.place_id = new_place_id or s.occupied_by = new_patient_id)
+      and (s.check_in_datetime, s.check_out_datetime) overlaps
+          (new_check_in_datetime, coalesce(new_check_out_datetime, timestamp 'infinity'))
+  );
+end; $$ language plpgsql;
+
+create or replace function tools.is_in_patient_service_valid(
+  stay_id int,
+  datetime timestamp
+)
+returns bool immutable as $$ begin
+  return exists(
+    select *
+    from ipc.in_patient_clinic_stay as s
+    where s.id = stay_id
+      and datetime between s.check_in_datetime and coalesce(s.check_out_datetime, timestamp 'infinity')
+  );
+end; $$ language plpgsql;

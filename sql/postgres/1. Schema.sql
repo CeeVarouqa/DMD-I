@@ -265,5 +265,11 @@ create table if not exists board.modifications
 , change text not null
 , modifies int references board.messages(id) not null
 , made_by int references usr.staff(id) not null
-)
+);
 -------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- Service
+-------------------------------------------------------------------------------
+create schema if not exists service;
+

@@ -263,10 +263,32 @@ create table if not exists board.modifications
 , modifies int references board.messages (id) not null
 , made_by  int references usr.staff (id)      not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- Service
 -------------------------------------------------------------------------------
 create schema if not exists service;
 
+-------------------------------------------------------------------------------
+-- service.redirection
+-------------------------------------------------------------------------------
+create table if not exists service.redirections
+(
+  id         serial primary key
+, issue_date date default now()
+, directs_to int references usr.doctors (id)  not null
+, is_made_by int references usr.doctors (id)  not null
+, directs    int references usr.patients (id) not null
+);
+
+-------------------------------------------------------------------------------
+-- service.in_patient_direction
+-------------------------------------------------------------------------------
+create table if not exists service.in_patient_directions
+(
+  id         serial primary key
+, issue_date date default now()
+, is_made_by int references usr.doctors (id)  not null
+, directs    int references usr.patients (id) not null
+);

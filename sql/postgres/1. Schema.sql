@@ -136,7 +136,7 @@ create table if not exists usr.staff
 , hired_by         int            not null
 , employment_start date           not null
 , employment_end   date           null check (tools.is_employment_end_valid(id, employment_start, employment_end))
-, salary           decimal        not null
+, salary           money        not null
 , schedule_type    types.Schedule not null
 );
 
@@ -423,7 +423,7 @@ create table if not exists finance.invoices
 (
   id       serial primary key
 , datetime timestamp default now() check ( datetime <= now() )
-, amount   decimal                          not null check ( amount > 0 )
+, amount   money                          not null check ( amount > 0 )
 , text     text                             null
 , paid_by  int references usr.patients (id) not null
 );

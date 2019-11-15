@@ -24,10 +24,10 @@ $$
 
     if not tools.exists_type('DoctorSpecialization') then
       create type types.DoctorSpecialization as enum (
-        'Traumatologist',
-        'Surgeon',
-        'Oculist',
-        'Therapist'
+        'Traumatologist'
+      , 'Surgeon'
+      , 'Oculist'
+      , 'Therapist'
       );
     end if;
   end
@@ -39,15 +39,15 @@ $$;
 -------------------------------------------------------------------------------
 create table if not exists usr.users
 (
-  id                serial primary key,
-  first_name        varchar(255) not null,
-  last_name         varchar(255) not null,
-  email             varchar(255) not null unique,
-  hash_pass         varchar(64)  not null,
-  birth_date        date         not null,
-  is_dead           boolean default false,
-  insurance_company varchar(255),
-  insurance_number  varchar(255),
+  id                serial primary key
+, first_name        varchar(255) not null
+, last_name         varchar(255) not null
+, email             varchar(255) not null unique
+, hash_pass         varchar(64)  not null
+, birth_date        date         not null
+, is_dead           boolean default false
+, insurance_company varchar(255)
+, insurance_number  varchar(255),
 
   constraint unique_insurance unique (insurance_company, insurance_number)
 );
@@ -58,12 +58,12 @@ create table if not exists usr.users
 -------------------------------------------------------------------------------
 create table if not exists usr.staff
 (
-  id               int primary key references usr.users,
-  hired_by         int            not null,
-  employment_start date           not null,
-  employment_end   date           null,
-  salary           decimal        not null,
-  schedule_type    types.Schedule not null
+  id               int primary key references usr.users
+, hired_by         int            not null
+, employment_start date           not null
+, employment_end   date           null
+, salary           decimal        not null
+, schedule_type    types.Schedule not null
 );
 -------------------------------------------------------------------------------
 
@@ -95,7 +95,7 @@ create table if not exists usr.doctors
 (
   id             int primary key references usr.staff
 , specialization types.DoctorSpecialization not null
---   , clinc_number not null
+-- , clinc_number not null
 );
 -------------------------------------------------------------------------------
 
@@ -185,9 +185,9 @@ create schema if not exists msg;
 -------------------------------------------------------------------------------
 create table if not exists msg.chats
 (
-  id        serial primary key,
-  name      varchar(255)   not null unique,
-  chat_type types.ChatType not null
+  id        serial primary key
+, name      varchar(255)   not null unique
+, chat_type types.ChatType not null
 );
 -------------------------------------------------------------------------------
 
@@ -196,12 +196,12 @@ create table if not exists msg.chats
 -------------------------------------------------------------------------------
 create table if not exists msg.messages
 (
-  id           serial primary key,
-  content_type types.ContentType                 not null,
-  content      varchar(255)                      not null,
-  datetime     timestamp                         not null,
-  sent_by      integer references usr.users (id) not null,
-  sent_to      integer references msg.chats (id) not null
+  id           serial primary key
+, content_type types.ContentType                 not null
+, content      varchar(255)                      not null
+, datetime     timestamp                         not null
+, sent_by      integer references usr.users (id) not null
+, sent_to      integer references msg.chats (id) not null
 );
 -------------------------------------------------------------------------------
 
@@ -210,10 +210,10 @@ create table if not exists msg.messages
 -------------------------------------------------------------------------------
 create table if not exists msg.chats_participants
 (
-  id                              serial primary key,
-  chat_id                         integer references msg.chats (id) not null,
-  user_id                         integer references usr.users (id),
-  private_chat_participant_number boolean
+  id                              serial primary key
+, chat_id                         integer references msg.chats (id) not null
+, user_id                         integer references usr.users (id)
+, private_chat_participant_number boolean
 );
 
 create unique index participate_private on msg.chats_participants (chat_id, private_chat_participant_number) where (
@@ -231,10 +231,10 @@ create schema if not exists logging;
 -------------------------------------------------------------------------------
 create table if not exists logging.logs
 (
-  id           serial primary key,
-  date         timestamp not null,
-  text         text      not null,
-  performed_by integer references usr.users (id)
+  id           serial primary key
+, date         timestamp not null
+, text         text      not null
+, performed_by integer references usr.users (id)
 );
 -------------------------------------------------------------------------------
 
@@ -249,8 +249,8 @@ create schema if not exists board;
 -------------------------------------------------------------------------------
 create table if not exists board.messages
 (
-  id   serial primary key
-, text text not null
+  id     serial primary key
+, text   text not null
 , expiry date default now() + interval '10 day'
 );
 -------------------------------------------------------------------------------
@@ -260,11 +260,11 @@ create table if not exists board.messages
 -------------------------------------------------------------------------------
 create table if not exists board.modifications
 (
-  id serial primary key
-, date date default now()
-, change text not null
-, modifies int references board.messages(id) not null
-, made_by int references usr.staff(id) not null
+  id       serial primary key
+, date     date default now()
+, change   text                               not null
+, modifies int references board.messages (id) not null
+, made_by  int references usr.staff (id)      not null
 );
 -------------------------------------------------------------------------------
 

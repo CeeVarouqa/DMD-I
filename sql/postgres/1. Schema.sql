@@ -30,6 +30,15 @@ $$
       , 'Therapist'
       );
     end if;
+
+    if not tools.exists_type('ChangeType') then
+      create type types.ChangeType as enum (
+        'Addition'
+      , 'Removal'
+      , 'Modification'
+      , 'Creation'
+      );
+    end if;
   end
 $$;
 
@@ -257,11 +266,12 @@ create table if not exists board.messages
 -------------------------------------------------------------------------------
 create table if not exists board.modifications
 (
-  id       serial primary key
+  id          serial primary key
 , date     date default now()
-, change   text                               not null
-, modifies int references board.messages (id) not null
-, made_by  int references usr.staff (id)      not null
+, change      text                               not null
+, change_type types.ChangeType                   not null
+, modifies    int references board.messages (id) not null
+, made_by     int references usr.staff (id)      not null
 );
 
 

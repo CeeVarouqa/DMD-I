@@ -506,11 +506,53 @@ create schema if not exists ipc;
 -------------------------------------------------------------------------------
 -- ipc.in_patient_clinic_places
 -------------------------------------------------------------------------------
--- create table if not exists ipc.in_patient_clinic_places
--- (
---   id serial primary key
--- , room varchar(32) not null
--- );
+create table if not exists ipc.in_patient_clinic_places
+(
+  id             serial primary key
+, room           varchar(32) not null
+, amount_per_day money       not null
+);
+
+-------------------------------------------------------------------------------
+-- ipc.in_patient_clinic_stay
+-------------------------------------------------------------------------------
+create table if not exists ipc.in_patient_clinic_stay
+(
+  id                 serial primary key
+, place_id           int       not null references ipc.in_patient_clinic_places
+, occupied_by        int       not null references usr.patients
+, invoice_id         int       not null references finance.invoices unique
+, check_in_datetime  timestamp not null default now()
+, check_out_datetime timestamp null
+, amount_per_day     money     not null
+
+, check((check_out_datetime is null) or (check_in_datetime < check_out_datetime))
+, check(tools.can_patient_stay_at_in_patient_clinic(occupied_by, place_id, check_in_datetime, check_out_datetime))
+);
+
+-------------------------------------------------------------------------------
+-- ipc.in_patient_clinic_services
+-------------------------------------------------------------------------------
+create table if not exists ipc.in_patient_clinic_services
+(
+  id           serial primary key
+, service_name varchar(255) not null
+, amount       money        not null
+);
+
+-------------------------------------------------------------------------------
+-- ipc.in_patient_clinic_provided_services
+-------------------------------------------------------------------------------
+create table if not exists ipc.in_patient_clinic_provided_services
+(
+  id       serial primary key
+, stay_id  int       not null references ipc.in_patient_clinic_stay
+, service  int       not null references ipc.in_patient_clinic_services
+, datetime timestamp not null default now()
+, amount   money     not null
+
+, check(tools.is_in_patient_service_valid(stay_id, datetime))
+);
 
 
 -------------------------------------------------------------------------------

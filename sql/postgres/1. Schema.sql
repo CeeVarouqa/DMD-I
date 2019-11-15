@@ -24,10 +24,19 @@ $$
 
     if not tools.exists_type('DoctorSpecialization') then
       create type types.DoctorSpecialization as enum (
-        'Traumatologist',
-        'Surgeon',
-        'Oculist',
-        'Therapist'
+        'Traumatologist'
+      , 'Surgeon'
+      , 'Oculist'
+      , 'Therapist'
+      );
+    end if;
+
+    if not tools.exists_type('ChangeType') then
+      create type types.ChangeType as enum (
+        'Addition'
+      , 'Removal'
+      , 'Modification'
+      , 'Creation'
       );
     end if;
 
@@ -48,40 +57,40 @@ $$
     end if;
   end
 $$;
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.users
 -------------------------------------------------------------------------------
 create table if not exists usr.users
 (
-  id                serial primary key,
-  first_name        varchar(255) not null,
-  last_name         varchar(255) not null,
-  email             varchar(255) not null unique,
-  hash_pass         varchar(64)  not null,
-  birth_date        date         not null,
-  is_dead           boolean default false,
-  insurance_company varchar(255),
-  insurance_number  varchar(255),
+  id                serial primary key
+, first_name        varchar(255) not null
+, last_name         varchar(255) not null
+, email             varchar(255) not null unique
+, hash_pass         varchar(64)  not null
+, birth_date        date         not null
+, is_dead           boolean default false
+, insurance_company varchar(255)
+, insurance_number  varchar(255),
 
   constraint unique_insurance unique (insurance_company, insurance_number)
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.staff
 -------------------------------------------------------------------------------
 create table if not exists usr.staff
 (
-  id               int primary key references usr.users,
-  hired_by         int            not null,
-  employment_start date           not null,
-  employment_end   date           null,
-  salary           decimal        not null,
-  schedule_type    types.Schedule not null
+  id               int primary key references usr.users
+, hired_by         int            not null
+, employment_start date           not null
+, employment_end   date           null check ( tools.is_employment_end_valid(id, employment_start, employment_end))
+, salary           decimal        not null
+, schedule_type    types.Schedule not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.hrs
@@ -102,7 +111,7 @@ $$
     end if;
   end
 $$;
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.doctors
@@ -111,9 +120,9 @@ create table if not exists usr.doctors
 (
   id             int primary key references usr.staff
 , specialization types.DoctorSpecialization not null
---   , clinc_number not null
+-- , clinc_number not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.nurses
@@ -122,7 +131,7 @@ create table if not exists usr.nurses
 (
   id int primary key references usr.staff
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.doctors_nurses
@@ -133,7 +142,7 @@ create table if not exists usr.doctors_nurses
 , doctor_id int references usr.doctors not null
 , nurse_id  int references usr.nurses  not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.inventory_managers
@@ -142,7 +151,7 @@ create table if not exists usr.inventory_managers
 (
   id int primary key references usr.staff
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.pharmacists
@@ -151,7 +160,7 @@ create table if not exists usr.pharmacists
 (
   id int primary key references usr.staff
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.lab_technicians
@@ -160,16 +169,16 @@ create table if not exists usr.lab_technicians
 (
   id int primary key references usr.staff
 );
--------------------------------------------------------------------------------
 
--------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------is_employment_end_valid
 -- usr.receptionists
 -------------------------------------------------------------------------------
 create table if not exists usr.receptionists
 (
   id int primary key references usr.staff
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.paramedics
@@ -179,7 +188,7 @@ create table if not exists usr.paramedics
   id int primary key references usr.staff
 -- , position
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- usr.patients
@@ -188,7 +197,6 @@ create table if not exists usr.patients
 (
   id int primary key references usr.users
 );
--------------------------------------------------------------------------------
 
 
 -------------------------------------------------------------------------------
@@ -201,40 +209,39 @@ create schema if not exists msg;
 -------------------------------------------------------------------------------
 create table if not exists msg.chats
 (
-  id        serial primary key,
-  name      varchar(255)   not null unique,
-  chat_type types.ChatType not null
+  id        serial primary key
+, name      varchar(255)   not null unique
+, chat_type types.ChatType not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- msg.message
 -------------------------------------------------------------------------------
 create table if not exists msg.messages
 (
-  id           serial primary key,
-  content_type types.ContentType                 not null,
-  content      varchar(255)                      not null,
-  datetime     timestamp                         not null,
-  sent_by      integer references usr.users (id) not null,
-  sent_to      integer references msg.chats (id) not null
+  id           serial primary key
+, content_type types.ContentType                 not null
+, content      varchar(255)                      not null
+, datetime     timestamp                         not null check ( datetime <= now() )
+, sent_by      integer references usr.users (id) not null
+, sent_to      integer references msg.chats (id) not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- msg.participate
 -------------------------------------------------------------------------------
 create table if not exists msg.chats_participants
 (
-  id                              serial primary key,
-  chat_id                         integer references msg.chats (id) not null,
-  user_id                         integer references usr.users (id),
-  private_chat_participant_number boolean
+  id                              serial primary key
+, chat_id                         integer references msg.chats (id) not null
+, user_id                         integer references usr.users (id)
+, private_chat_participant_number boolean
 );
 
 create unique index participate_private on msg.chats_participants (chat_id, private_chat_participant_number) where (
   tools.is_chat_private(chat_id));
--------------------------------------------------------------------------------
 
 
 -------------------------------------------------------------------------------
@@ -247,12 +254,11 @@ create schema if not exists logging;
 -------------------------------------------------------------------------------
 create table if not exists logging.logs
 (
-  id           serial primary key,
-  date         timestamp not null,
-  text         text      not null,
-  performed_by integer references usr.users (id)
+  id           serial primary key
+, date         timestamp not null check ( date <= now() )
+, text         text      not null
+, performed_by integer references usr.users (id)
 );
--------------------------------------------------------------------------------
 
 
 -------------------------------------------------------------------------------
@@ -265,24 +271,25 @@ create schema if not exists board;
 -------------------------------------------------------------------------------
 create table if not exists board.messages
 (
-  id   serial primary key
-, text text not null
-, expiry date default now() + interval '10 day'
+  id     serial primary key
+, text   text not null
+, expiry date default now() + interval '10 day' check ( expiry > now() )
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- board.modifications
 -------------------------------------------------------------------------------
 create table if not exists board.modifications
 (
-  id       serial primary key
-, date     date default now()
-, change   text                              not null
-, modifies int references board.messages(id) not null
-, made_by  int references usr.staff(id)      not null
+  id          serial primary key
+, datetime    timestamp default now() check ( datetime <= now() )
+, change      text                               not null
+, change_type types.ChangeType                   not null
+, modifies    int references board.messages (id) not null
+, made_by     int references usr.staff (id)      not null
 );
--------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- Service
@@ -303,6 +310,66 @@ create table if not exists service.appointments
 
 -- TODO: add unique constraints
 -------------------------------------------------------------------------------
+
+-- service.redirection
+-------------------------------------------------------------------------------
+create table if not exists service.redirections
+(
+  id         serial primary key
+, issue_date date default now() check ( issue_date <= now() )
+, directs_to int references usr.doctors (id)  not null
+, is_made_by int references usr.doctors (id)  not null
+, directs    int references usr.patients (id) not null
+);
+
+-------------------------------------------------------------------------------
+-- service.in_patient_direction
+-------------------------------------------------------------------------------
+create table if not exists service.in_patient_directions
+(
+  id         serial primary key
+, issue_date date default now() check ( issue_date <= now() )
+, is_made_by int references usr.doctors (id)  not null
+, directs    int references usr.patients (id) not null
+);
+
+
+-------------------------------------------------------------------------------
+-- Medical data
+-------------------------------------------------------------------------------
+create schema if not exists medical_data;
+
+-------------------------------------------------------------------------------
+-- medical_data.medical_records
+-------------------------------------------------------------------------------
+create table if not exists medical_data.medical_records
+(
+  id         serial primary key
+, content    text                             not null
+, belongs_to int references usr.patients (id) not null
+);
+
+-------------------------------------------------------------------------------
+-- medical_data.medical_record_modifications
+-------------------------------------------------------------------------------
+create table if not exists medical_data.medical_record_modifications
+(
+  id          serial primary key
+, change      text                          not null
+, change_type types.ChangeType              not null
+, date        date default now() check ( date <= now() )
+, is_made_by  int references usr.staff (id) not null
+);
+
+-------------------------------------------------------------------------------
+-- medical_data.prescriptions
+-------------------------------------------------------------------------------
+create table if not exists medical_data.prescriptions
+(
+  id serial primary key
+, issue_date date default now() check ( issue_date <= now() )
+)
+
 
 -------------------------------------------------------------------------------
 -- Inventory

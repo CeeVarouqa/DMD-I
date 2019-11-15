@@ -36,3 +36,16 @@ returns bool as $$ begin
     where r.constraint_name = reference_name
   );
 end; $$ language plpgsql;
+
+
+create or replace function tools.is_employment_end_valid(
+  user_id int, employment_start date, employment_end date
+)
+returns bool immutable as
+  $$
+  declare
+    is_user_dead bool;
+  begin
+    select usr."user".is_dead into is_user_dead from usr."user" where id = user_id;
+    return ((employment_start < employment_end) AND ((NOT is_user_dead) OR (employment_end <= now()))); -- (emp_start < emp_end) and (user_dead) -> (emp_end <= now())
+end; $$ language plpgsql;

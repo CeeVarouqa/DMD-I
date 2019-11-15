@@ -7,28 +7,31 @@ create schema if not exists usr;
 -- types
 -------------------------------------------------------------------------------
 create schema if not exists types;
-do $$ begin
-  if not tools.exists_type('Schedule') then
-    create type types.Schedule as enum ('2/3', '0', '1');
-  end if;
+do
+$$
+  begin
+    if not tools.exists_type('Schedule') then
+      create type types.Schedule as enum ('2/3', '0', '1');
+    end if;
 
-  if not tools.exists_type('ContentType') then
-    create type types.ContentType as enum ('text');
-  end if;
+    if not tools.exists_type('ContentType') then
+      create type types.ContentType as enum ('text');
+    end if;
 
-  if not tools.exists_type('ChatType') then
-    create type types.ChatType as enum ('private', 'channel', 'group');
-  end if;
+    if not tools.exists_type('ChatType') then
+      create type types.ChatType as enum ('private', 'channel', 'group');
+    end if;
 
-  if not tools.exists_type('DoctorSpecialization') then
-    create type types.DoctorSpecialization as enum (
-      'Traumatologist',
-      'Surgeon',
-      'Oculist',
-      'Therapist'
-    );
-  end if;
-end $$;
+    if not tools.exists_type('DoctorSpecialization') then
+      create type types.DoctorSpecialization as enum (
+        'Traumatologist',
+        'Surgeon',
+        'Oculist',
+        'Therapist'
+        );
+    end if;
+  end
+$$;
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
@@ -56,10 +59,10 @@ create table if not exists usr.users
 create table if not exists usr.staff
 (
   id               int primary key references usr.users,
-  hired_by         int      not null,
-  employment_start date     not null,
-  employment_end   date     null,
-  salary           decimal  not null,
+  hired_by         int            not null,
+  employment_start date           not null,
+  employment_end   date           null,
+  salary           decimal        not null,
   schedule_type    types.Schedule not null
 );
 -------------------------------------------------------------------------------
@@ -72,14 +75,17 @@ create table if not exists usr.hrs
   id int primary key references usr.staff
 );
 
-do $$ begin
-  if not tools.exists_reference('usr_staff_hired_by_usr_hr') then
-    alter table usr.staff
-    add constraint usr_staff_hired_by_usr_hr
-    foreign key (hired_by)
-    references usr.hrs(id);
-  end if;
-end $$;
+do
+$$
+  begin
+    if not tools.exists_reference('usr_staff_hired_by_usr_hr') then
+      alter table usr.staff
+        add constraint usr_staff_hired_by_usr_hr
+          foreign key (hired_by)
+            references usr.hrs (id);
+    end if;
+  end
+$$;
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
@@ -87,8 +93,8 @@ end $$;
 -------------------------------------------------------------------------------
 create table if not exists usr.doctors
 (
-  id int primary key references usr.staff
-  , specialization types.DoctorSpecialization not null
+  id             int primary key references usr.staff
+, specialization types.DoctorSpecialization not null
 --   , clinc_number not null
 );
 -------------------------------------------------------------------------------
@@ -105,11 +111,67 @@ create table if not exists usr.nurses
 -------------------------------------------------------------------------------
 -- usr.doctors_nurses
 -------------------------------------------------------------------------------
--- create table if not exists usr.doctors_nurses
--- (
---   id serial primary key,
---
--- );
+create table if not exists usr.doctors_nurses
+(
+  id        serial primary key
+, doctor_id int references usr.doctors not null
+, nurse_id  int references usr.nurses  not null
+);
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- usr.inventory_managers
+-------------------------------------------------------------------------------
+create table if not exists usr.inventory_managers
+(
+  id int primary key references usr.staff
+);
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- usr.pharmacists
+-------------------------------------------------------------------------------
+create table if not exists usr.pharmacists
+(
+  id int primary key references usr.staff
+);
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- usr.lab_technicians
+-------------------------------------------------------------------------------
+create table if not exists usr.lab_technicians
+(
+  id int primary key references usr.staff
+);
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- usr.receptionists
+-------------------------------------------------------------------------------
+create table if not exists usr.receptionists
+(
+  id int primary key references usr.staff
+);
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- usr.paramedics
+-------------------------------------------------------------------------------
+create table if not exists usr.paramedics
+(
+  id int primary key references usr.staff
+-- , position
+);
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- usr.patients
+-------------------------------------------------------------------------------
+create table if not exists usr.patients
+(
+  id int primary key references usr.users
+);
 -------------------------------------------------------------------------------
 
 
@@ -123,9 +185,9 @@ create schema if not exists msg;
 -------------------------------------------------------------------------------
 create table if not exists msg.chats
 (
-    id   serial primary key,
-    name varchar(255)   not null unique,
-    chat_type types.ChatType not null
+  id        serial primary key,
+  name      varchar(255)   not null unique,
+  chat_type types.ChatType not null
 );
 -------------------------------------------------------------------------------
 
@@ -135,9 +197,9 @@ create table if not exists msg.chats
 create table if not exists msg.messages
 (
   id           serial primary key,
-  content_type types.ContentType not null,
-  content      varchar(255)      not null,
-  datetime     timestamp         not null,
+  content_type types.ContentType                 not null,
+  content      varchar(255)                      not null,
+  datetime     timestamp                         not null,
   sent_by      integer references usr.users (id) not null,
   sent_to      integer references msg.chats (id) not null
 );
@@ -166,10 +228,10 @@ create schema if not exists logging;
 
 create table if not exists logging.logs
 (
-  id serial primary key,
-  date timestamp not null,
-  text text not null,
-  performed_by integer references usr.users(id)
+  id           serial primary key,
+  date         timestamp not null,
+  text         text      not null,
+  performed_by integer references usr.users (id)
 );
 
 -------------------------------------------------------------------------------

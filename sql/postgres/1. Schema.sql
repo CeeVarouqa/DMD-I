@@ -257,12 +257,13 @@ create table if not exists usr.paramedic_group_divisions
 , paramedic_id int references usr.paramedics (id)
 , group_id     int references usr.paramedic_groups (id)
 );
+
 -------------------------------------------------------------------------------
 -- usr.patients
 -------------------------------------------------------------------------------
 create table if not exists usr.patients
 (
-  id int primary key references usr.staff
+  id int primary key references usr.users
 );
 
 -------------------------------------------------------------------------------

@@ -171,3 +171,25 @@ create table if not exists logging.logs
   text text not null,
   performed_by integer references usr.users(id)
 );
+
+-------------------------------------------------------------------------------
+-- Notice board
+-------------------------------------------------------------------------------
+create schema if not exists board;
+
+create table if not exists board.messages
+(
+  id   serial primary key
+, text text not null
+, expiry date default now() + interval '10 day'
+);
+
+create table if not exists board.modifications
+(
+  id serial primary key
+, date date default now()
+, change text not null
+, modifies int references board.messages(id) not null
+, made_by int references usr.staff(id) not null
+)
+

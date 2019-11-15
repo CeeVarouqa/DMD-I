@@ -358,8 +358,19 @@ create table if not exists msg.chats_participants
 , private_chat_participant_number bool
 );
 
-create unique index participate_private on msg.chats_participants (chat_id, private_chat_participant_number) where (
-  tools.is_chat_private(chat_id));
+do $$ begin
+  if not exists(
+    select *
+    from pg_indexes as i
+    where i.schemaname = 'msg'
+      and i.tablename  = 'chats_participants'
+      and i.indexname  = 'participate_private'
+  ) then
+    create unique index participate_private on msg.chats_participants (chat_id, private_chat_participant_number) where (
+      tools.is_chat_private(chat_id)
+    );
+  end if;
+end$$;
 
 
 -------------------------------------------------------------------------------
@@ -424,7 +435,7 @@ create table if not exists finance.invoices
 (
   id       serial primary key
 , datetime timestamp default now() check ( datetime <= now() )
-, amount   money                          not null check ( amount > 0 )
+, amount   money                            not null check (amount > 0.0::money)
 , text     text                             null
 , paid_by  int references usr.patients (id) not null
 );
@@ -700,4 +711,4 @@ create table if not exists medical_data.analyses
 , datetime_proceeded timestamp            null
     check ((status = 'Proceeded') and ((datetime_proceeded is not null) and (datetime_proceeded > datetime_collected))
       or (status = 'Collected') and datetime_proceeded is null)
-)
+);

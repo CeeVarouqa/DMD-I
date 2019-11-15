@@ -134,13 +134,12 @@ create table if not exists usr.users
 create table if not exists usr.staff
 (
   id               int primary key references usr.users
-, hired_by         int            not null
+, hired_by         int            null
 , employment_start date           not null
 , employment_end   date           null check (tools.is_employment_end_valid(id, employment_start, employment_end))
 , salary           money        not null
 , schedule_type    types.Schedule not null
 );
-
 
 -------------------------------------------------------------------------------
 -- usr.hrs
@@ -267,9 +266,9 @@ create table if not exists usr.patients
 );
 
 -------------------------------------------------------------------------------
--- usr.admin
+-- usr.admins
 -------------------------------------------------------------------------------
-create table if not exists usr.admin
+create table if not exists usr.admins
 (
   id int primary key references usr.staff
 );
@@ -308,7 +307,7 @@ create or replace view usr.users_roles as
     on r.id = u.id
   left join usr.paramedics as pm
     on pm.id = u.id
-  left join usr.admin as a
+  left join usr.admins as a
     on a.id = u.id
 ;
 

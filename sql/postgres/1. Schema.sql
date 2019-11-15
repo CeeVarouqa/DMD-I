@@ -28,7 +28,7 @@ $$
         'Surgeon',
         'Oculist',
         'Therapist'
-        );
+      );
     end if;
   end
 $$;
@@ -80,9 +80,9 @@ $$
   begin
     if not tools.exists_reference('usr_staff_hired_by_usr_hr') then
       alter table usr.staff
-        add constraint usr_staff_hired_by_usr_hr
-          foreign key (hired_by)
-            references usr.hrs (id);
+      add constraint usr_staff_hired_by_usr_hr
+      foreign key (hired_by)
+      references usr.hrs (id);
     end if;
   end
 $$;
@@ -226,6 +226,9 @@ create unique index participate_private on msg.chats_participants (chat_id, priv
 -------------------------------------------------------------------------------
 create schema if not exists logging;
 
+-------------------------------------------------------------------------------
+-- logging.logs
+-------------------------------------------------------------------------------
 create table if not exists logging.logs
 (
   id           serial primary key,
@@ -233,19 +236,28 @@ create table if not exists logging.logs
   text         text      not null,
   performed_by integer references usr.users (id)
 );
+-------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------
 -- Notice board
 -------------------------------------------------------------------------------
 create schema if not exists board;
 
+-------------------------------------------------------------------------------
+-- board.messages
+-------------------------------------------------------------------------------
 create table if not exists board.messages
 (
   id   serial primary key
 , text text not null
 , expiry date default now() + interval '10 day'
 );
+-------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+-- board.modifications
+-------------------------------------------------------------------------------
 create table if not exists board.modifications
 (
   id serial primary key
@@ -254,4 +266,4 @@ create table if not exists board.modifications
 , modifies int references board.messages(id) not null
 , made_by int references usr.staff(id) not null
 )
-
+-------------------------------------------------------------------------------

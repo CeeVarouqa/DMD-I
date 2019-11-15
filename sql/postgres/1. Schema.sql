@@ -137,7 +137,7 @@ create table if not exists usr.staff
 , hired_by         int            not null
 , employment_start date           not null
 , employment_end   date           null check (tools.is_employment_end_valid(id, employment_start, employment_end))
-, salary           decimal        not null
+, salary           money        not null
 , schedule_type    types.Schedule not null
 );
 
@@ -424,7 +424,7 @@ create table if not exists finance.invoices
 (
   id       serial primary key
 , datetime timestamp default now() check ( datetime <= now() )
-, amount   decimal                          not null check ( amount > 0 )
+, amount   money                          not null check ( amount > 0 )
 , text     text                             null
 , paid_by  int references usr.patients (id) not null
 );
@@ -440,19 +440,19 @@ create table if not exists finance.payments
 , insurance_company varchar(255) check ( type = 'Insurance' AND insurance_company is not null )
 , insurance_number  varchar(255) check ( type = 'Insurance' AND insurance_number is not null )
 , accepted_by       int references usr.receptionists (id)
-, pays_for          int references finance.invoices (id)
+, pays_for          int references finance.invoices (id) unique
 );
 
 
 -------------------------------------------------------------------------------
--- Service
+-- meeting
 -------------------------------------------------------------------------------
-create schema if not exists service;
+create schema if not exists meeting;
 
 -------------------------------------------------------------------------------
--- service.appointments
+-- meeting.appointments
 -------------------------------------------------------------------------------
-create table if not exists service.appointments
+create table if not exists meeting.appointments
 (
   id         serial primary key
 , doctor_id  int references usr.doctors  not null
@@ -460,7 +460,7 @@ create table if not exists service.appointments
 , datetime   timestamp                   not null
 , location   varchar(255)                not null
 , invoice_id int                         not null
-    references finance.invoices
+    references finance.invoices unique
 
 , unique (doctor_id, datetime)
 , unique (patient_id, datetime)
@@ -468,9 +468,9 @@ create table if not exists service.appointments
 );
 
 -------------------------------------------------------------------------------
--- service.redirection
+-- meeting.redirection
 -------------------------------------------------------------------------------
-create table if not exists service.redirections
+create table if not exists meeting.redirections
 (
   id         serial primary key
 , issue_date date not null
@@ -484,9 +484,9 @@ create table if not exists service.redirections
 );
 
 -------------------------------------------------------------------------------
--- service.in_patient_direction
+-- meeting.in_patient_direction
 -------------------------------------------------------------------------------
-create table if not exists service.in_patient_directions
+create table if not exists meeting.in_patient_directions
 (
   id         serial primary key
 , issue_date date                             not null
@@ -638,7 +638,7 @@ create table if not exists medical_data.ambulance_calls
 , location         point     not null
 , datetime         timestamp not null default now() check ( datetime < now() )
 , assigned_group   int       not null references usr.paramedic_groups (id)
-, assigned_invoice int       not null references finance.invoices (id)
+, assigned_invoice int       not null references finance.invoices (id) unique
 , is_made_by       int       not null references usr.patients (id)
 );
 

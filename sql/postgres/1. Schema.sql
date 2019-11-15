@@ -67,6 +67,14 @@ $$
       );
     end if;
 
+    if not tools.exists_type('PaymentType') then
+      create type types.PaymentType as enum (
+          'Cash'
+        , 'Card'
+        , 'Insurance'
+      );
+    end if;
+
     if not tools.exists_type('InventoryItemApprovalStatus') then
       create type types.InventoryItemApprovalStatus as enum (
           'Approved'
@@ -215,7 +223,24 @@ create table if not exists usr.paramedics
 , position types.ParamedicPosition not null
 );
 
+-------------------------------------------------------------------------------
+-- usr.paramedic_groups
+-------------------------------------------------------------------------------
+create table if not exists usr.paramedic_groups
+(
+  id serial primary key 
+, is_active boolean default true
+);
 
+-------------------------------------------------------------------------------
+-- usr.paramedic_group_divisions
+-------------------------------------------------------------------------------
+create table if not exists usr.paramedic_group_divisions
+(
+  id           serial primary key
+, paramedic_id int references usr.paramedics (id)
+, group_id     int references usr.paramedic_groups (id)
+);
 -------------------------------------------------------------------------------
 -- usr.patients
 -------------------------------------------------------------------------------
@@ -368,6 +393,38 @@ create table if not exists board.modifications
 , change_type types.ChangeType                   not null
 , modifies    int references board.messages (id) not null
 , made_by     int references usr.staff (id)      not null
+);
+
+
+-------------------------------------------------------------------------------
+-- Finance
+-------------------------------------------------------------------------------
+create schema if not exists finance;
+
+-------------------------------------------------------------------------------
+-- finance.invoices
+-------------------------------------------------------------------------------
+create table if not exists finance.invoices
+(
+  id       serial primary key
+, datetime timestamp default now() check ( datetime <= now() )
+, amount   decimal                          not null check ( amount > 0 )
+, text     text                             null
+, paid_by  int references usr.patients (id) not null
+);
+
+-------------------------------------------------------------------------------
+-- finance.payments
+-------------------------------------------------------------------------------
+create table if not exists finance.payments
+(
+  id                serial primary key
+, datetime          timestamp default now() check ( datetime <= now())
+, type              types.PaymentType not null
+, insurance_company varchar(255) check ( type = 'Insurance' AND insurance_company is not null )
+, insurance_number  varchar(255) check ( type = 'Insurance' AND insurance_number is not null )
+, accepted_by       int references usr.receptionists (id)
+, pays_for          int references finance.invoices (id)
 );
 
 
@@ -546,4 +603,14 @@ create table if not exists medical_data.prescription_allowances
 , inventory_item_id int not null
     references inventory.inventory_items (id)
     check (tools.is_inventory_item_valid_for_sale(inventory_item_id))
+);
+
+-------------------------------------------------------------------------------
+-- medical_data.ambulance_calls
+-------------------------------------------------------------------------------
+create table if not exists  medical_data.ambulance_calls
+(
+  id serial primary key
+, location point not null
+, datetime timestamp not null 
 );

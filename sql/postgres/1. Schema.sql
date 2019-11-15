@@ -11,15 +11,25 @@ do
 $$
   begin
     if not tools.exists_type('Schedule') then
-      create type types.Schedule as enum ('2/3', '0', '1');
+      create type types.Schedule as enum (
+        '2/3'
+      , '0'
+      , '1'
+      );
     end if;
 
     if not tools.exists_type('ContentType') then
-      create type types.ContentType as enum ('text');
+      create type types.ContentType as enum (
+        'text'
+      );
     end if;
 
     if not tools.exists_type('ChatType') then
-      create type types.ChatType as enum ('private', 'channel', 'group');
+      create type types.ChatType as enum (
+        'private'
+      , 'channel'
+      , 'group'
+      );
     end if;
 
     if not tools.exists_type('DoctorSpecialization') then
@@ -42,17 +52,33 @@ $$
 
     if not tools.exists_type('UnitType') then
       create type types.UnitType as enum (
-          'items'
-        , 'litres'
-        , 'grams'
+          'Items'
+        , 'Litres'
+        , 'Grams'
       );
     end if;
 
     if not tools.exists_type('InventoryItemCategory') then
       create type types.InventoryItemCategory as enum (
-          'medicine'
-        , 'hospital stationary item'
-        , 'electronic device'
+          'Medicine'
+        , 'Hospital stationary item'
+        , 'Electronic device'
+        , 'Pharmacy item'
+      );
+    end if;
+
+    if not tools.exists_type('InventoryItemApprovalStatus') then
+      create type types.InventoryItemApprovalStatus as enum (
+          'Approved'
+        , 'Rejected'
+        , 'Pending'
+      );
+    end if;
+
+    if not tools.exists_type('ParamedicPosition') then
+      create type types.ParamedicPosition as enum (
+          'Primary'
+        , 'Secondary'
       );
     end if;
   end
@@ -86,7 +112,7 @@ create table if not exists usr.staff
   id               int primary key references usr.users
 , hired_by         int            not null
 , employment_start date           not null
-, employment_end   date           null check ( tools.is_employment_end_valid(id, employment_start, employment_end))
+, employment_end   date           null check (tools.is_employment_end_valid(id, employment_start, employment_end))
 , salary           decimal        not null
 , schedule_type    types.Schedule not null
 );
@@ -120,7 +146,7 @@ create table if not exists usr.doctors
 (
   id             int primary key references usr.staff
 , specialization types.DoctorSpecialization not null
--- , clinc_number not null
+, clinic_number  varchar(32)                not null
 );
 
 
@@ -171,7 +197,7 @@ create table if not exists usr.lab_technicians
 );
 
 
--------------------------------------------------------------------------------is_employment_end_valid
+-------------------------------------------------------------------------------
 -- usr.receptionists
 -------------------------------------------------------------------------------
 create table if not exists usr.receptionists
@@ -185,8 +211,8 @@ create table if not exists usr.receptionists
 -------------------------------------------------------------------------------
 create table if not exists usr.paramedics
 (
-  id int primary key references usr.staff
--- , position
+  id       int primary key references usr.staff
+, position types.ParamedicPosition not null
 );
 
 
@@ -195,8 +221,54 @@ create table if not exists usr.paramedics
 -------------------------------------------------------------------------------
 create table if not exists usr.patients
 (
-  id int primary key references usr.users
+  id int primary key references usr.staff
 );
+
+-------------------------------------------------------------------------------
+-- usr.admin
+-------------------------------------------------------------------------------
+create table if not exists usr.admin
+(
+  id int primary key references usr.staff
+);
+
+-------------------------------------------------------------------------------
+-- usr.users_roles
+-------------------------------------------------------------------------------
+create or replace view usr.users_roles as
+  select u.id              as user_id
+       , p.id  is not null as is_patient
+       , h.id  is not null as is_hr
+       , d.id  is not null as is_doctor
+       , n.id  is not null as is_nurse
+       , im.id is not null as is_inventory_manager
+       , ph.id is not null as is_pharmacist
+       , lt.id is not null as is_lab_technician
+       , r.id  is not null as is_receptionist
+       , pm.id is not null as is_paramedic
+       , a.id  is not null as is_admin
+  from usr.users as u
+  left join usr.patients as p
+    on p.id = u.id
+  left join usr.hrs as h
+    on h.id = u.id
+  left join usr.doctors as d
+    on d.id = u.id
+  left join usr.nurses as n
+    on n.id = u.id
+  left join usr.inventory_managers as im
+    on im.id = u.id
+  left join usr.pharmacists as ph
+    on ph.id = u.id
+  left join usr.lab_technicians as lt
+    on lt.id = u.id
+  left join usr.receptionists as r
+    on r.id = u.id
+  left join usr.paramedics as pm
+    on pm.id = u.id
+  left join usr.admin as a
+    on a.id = u.id
+;
 
 
 -------------------------------------------------------------------------------
@@ -223,7 +295,7 @@ create table if not exists msg.messages
   id           serial primary key
 , content_type types.ContentType                 not null
 , content      varchar(255)                      not null
-, datetime     timestamp                         not null check ( datetime <= now() )
+, datetime     timestamp                         not null check (datetime <= now())
 , sent_by      integer references usr.users (id) not null
 , sent_to      integer references msg.chats (id) not null
 );
@@ -306,11 +378,15 @@ create table if not exists service.appointments
 , patient_id int references usr.patients not null
 , datetime   timestamp                   not null
 , location   varchar(255)                not null
+, invoice_id int                         not null
+    references finance.invoices
+
+, unique (doctor_id, datetime)
+, unique (patient_id, datetime)
+, unique (datetime, location)
 );
 
--- TODO: add unique constraints
 -------------------------------------------------------------------------------
-
 -- service.redirection
 -------------------------------------------------------------------------------
 create table if not exists service.redirections
@@ -368,8 +444,7 @@ create table if not exists medical_data.prescriptions
 (
   id serial primary key
 , issue_date date default now() check ( issue_date <= now() )
-)
-
+);
 
 -------------------------------------------------------------------------------
 -- Inventory
@@ -389,16 +464,56 @@ create table if not exists inventory.inventory_items
 , is_consumable     bool                        not null
 , category          types.InventoryItemCategory not null
 , need_prescription bool                        not null
+
+, unique (category, name)
 );
 
--- TODO: unique constraints
 -------------------------------------------------------------------------------
+-- inventory.inventory_items_requests
+-------------------------------------------------------------------------------
+create table if not exists inventory.inventory_items_requests
+(
+  id           serial primary key
+, item_id      int not null
+    references inventory.inventory_items
+, requested_by int                                      not null
+    references usr.staff
+    check (tools.can_staff_make_item_request(requested_by))
+, status       types.InventoryItemApprovalStatus        not null
+    default 'Pending'
+, approved_by  int references usr.inventory_managers    null
+, datetime     timestamp                                not null
+    default now() check (datetime >= now())
+, units        types.UnitType                           not null
+, quantity     numeric(32, 6)                           not null
+);
 
 -------------------------------------------------------------------------------
--- inventory.inventory_items
+-- inventory.item_sales
 -------------------------------------------------------------------------------
--- create table if not exists inventory.inverntory_items_requests
--- (
---
--- );
+create table if not exists inventory.item_sales
+(
+  id serial primary key
+, item_id      int not null
+    references inventory.inventory_items
+    check (  )
+, units         types.UnitType not null
+, quantity      numeric(32, 6) not null
+, cost_per_unit money          not null
+, datetime      timestamp      not null
+    default now() check (datetime >= now())
+, sold_by       int            not null
+    references usr.pharmacists
+, invoice_id    int            not null
+    references finance.invoices
+);
+
+
+-------------------------------------------------------------------------------
+-- In-patient clinic
+-------------------------------------------------------------------------------
+create schema if not exists ipc;
+
+-------------------------------------------------------------------------------
+-- ipc.in_patient_clinic_places
 -------------------------------------------------------------------------------

@@ -691,7 +691,7 @@ create table if not exists medical_data.ambulance_calls
 (
   id               serial primary key
 , location         point     not null
-, datetime         timestamp not null default now() check ( datetime < now() )
+, datetime         timestamp not null default now() check ( datetime <= now() )
 , assigned_group   int       not null references usr.paramedic_groups (id)
 , assigned_invoice int       not null references finance.invoices (id) unique
 , is_made_by       int       not null references usr.patients (id)
@@ -711,6 +711,6 @@ create table if not exists medical_data.analyses
 , requested_by       int                  not null references usr.patients (id)
 , datetime_collected timestamp            not null default now() check (datetime_collected <= now())
 , datetime_proceeded timestamp            null
-    check ((status = 'Proceeded') and ((datetime_proceeded is not null) and (datetime_proceeded > datetime_collected))
+    check ((status = 'Proceeded') and ((datetime_proceeded is not null) and (datetime_proceeded between datetime_collected and now()))
       or (status = 'Collected') and datetime_proceeded is null)
 );

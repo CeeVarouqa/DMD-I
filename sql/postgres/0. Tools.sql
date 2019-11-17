@@ -117,3 +117,15 @@ create or replace function tools.xor(x bool, y bool)
 returns bool immutable as $$ begin
   return (not x and y) or (x and not y);
 end; $$ language plpgsql;
+
+
+create or replace function tools.number_of_weeks_between(begin_date date, end_date date)
+returns int immutable as $$ begin
+  return (end_date - begin_date) / 7;
+end; $$ language plpgsql;
+
+
+create or replace function tools.absolute_number_of_weeks(end_date date)
+returns int immutable as $$ begin
+  return tools.number_of_weeks_between('epoch'::date, end_date);
+end; $$ language plpgsql;

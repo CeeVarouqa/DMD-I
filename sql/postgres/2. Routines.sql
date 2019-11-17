@@ -64,3 +64,39 @@ begin
     );
 end;
 $$;
+
+create or replace function meeting.doctors_appointments_report(begin_date date, end_date date)
+  returns table
+          (
+            doctor_id int
+          , visits_total_number int
+          , avg_visits_per_week numeric
+          )
+  immutable
+  language plpgsql
+as
+$$
+begin
+  return query
+    with doctors_weeks as
+    (
+      select a.doctor_id
+           , tools.absolute_number_of_weeks(datetime::date) as abs_weeks
+      from meeting.appointments as a
+      where a.datetime::date between begin_date and end_date
+    ),
+    doctors_visits as
+    (
+      select distinct dw.doctor_id
+           , dw.abs_weeks
+           , count(*) over(partition by dw.doctor_id) as visits_total_number
+           , count(*) over(partition by dw.doctor_id, dw.abs_weeks) as visits_per_week
+      from doctors_weeks as dw
+    )
+    select dv.doctor_id
+         , dv.visits_total_number::int
+         , avg(dv.visits_per_week) as avg_visits_per_week
+    from doctors_visits as dv
+    group by dv.doctor_id, dv.visits_total_number;
+end;
+$$;

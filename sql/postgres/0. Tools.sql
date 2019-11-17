@@ -111,3 +111,9 @@ returns bool immutable as $$ begin
       and datetime between s.check_in_datetime and coalesce(s.check_out_datetime, timestamp 'infinity')
   );
 end; $$ language plpgsql;
+
+
+create or replace function tools.xor(x bool, y bool)
+returns bool immutable as $$ begin
+  return (not x and y) or (x and not y);
+end; $$ language plpgsql;

@@ -335,7 +335,7 @@ create table if not exists msg.messages
 (
   id           serial primary key
 , content_type types.ContentType not null
-, content      varchar(255)      not null
+, content      text              not null
 , datetime     timestamp         not null
     check (datetime <= now())
 , sent_by      int               not null

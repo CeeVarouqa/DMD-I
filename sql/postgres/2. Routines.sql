@@ -100,3 +100,39 @@ begin
     group by dv.doctor_id, dv.visits_total_number;
 end;
 $$;
+
+create or replace function finance.get_possible_profit_last_month()
+  returns money
+  language plpgsql
+as
+$$
+begin
+--   TODO: Запрос сам по себе работает, но не понимаю, как его красиво в функцию обернуть
+with
+  appointment_counts as
+    (
+      select
+        patient_id
+      , count(id) as appointments_count
+      from
+        meeting.appointments
+      where
+        datetime between date_trunc('month', current_date - interval '1 month') and date_trunc('month', current_date)
+      group by
+        patient_id
+    ),
+  collapsed_data as
+    (
+      select
+        a.patient_id
+      , a.appointments_count
+      , tools.get_age(u.birth_date) as age
+      from
+        appointment_counts as a
+          join usr.users as u on a.patient_id = u.id
+    )
+select sum(tools.charge(age, appointments_count))
+from
+  collapsed_data;
+end;
+$$;

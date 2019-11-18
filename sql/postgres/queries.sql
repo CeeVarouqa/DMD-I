@@ -8,5 +8,4 @@ select r.*
 from meeting.doctors_appointments_report('2018-12-01', '2019-12-01') as r;
 
 -- Query 4
-select p.*
-from finance.get_possible_profit_last_month() as p;
+select finance.get_possible_profit_last_month() as profit_last_month;

@@ -103,11 +103,9 @@ $$;
 
 create or replace function finance.get_possible_profit_last_month()
   returns money
-  language plpgsql
+  language sql
 as
 $$
-begin
---   TODO: Запрос сам по себе работает, но не понимаю, как его красиво в функцию обернуть
 with
   appointment_counts as
     (
@@ -134,5 +132,4 @@ with
 select sum(tools.charge(age, appointments_count))
 from
   collapsed_data;
-end;
 $$;

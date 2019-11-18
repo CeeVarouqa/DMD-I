@@ -76,26 +76,36 @@ create or replace function meeting.doctors_appointments_report(begin_date date, 
   language plpgsql
 as
 $$
+declare
+  num_weeks_between_dates int := tools.number_of_weeks_between(begin_date, end_date);
 begin
+  num_weeks_between_dates :=
+    case num_weeks_between_dates
+      when 0 then 1
+      else num_weeks_between_dates
+    end;
+
   return query
     with doctors_weeks as
     (
       select a.doctor_id
-           , tools.absolute_number_of_weeks(datetime::date) as abs_weeks
+           , tools.number_of_weeks_between(begin_date, datetime::date) as week_no
       from meeting.appointments as a
       where a.datetime::date between begin_date and end_date
     ),
     doctors_visits as
     (
       select distinct dw.doctor_id
-           , dw.abs_weeks
+           , dw.week_no
            , count(*) over(partition by dw.doctor_id) as visits_total_number
-           , count(*) over(partition by dw.doctor_id, dw.abs_weeks) as visits_per_week
+           , count(*) over(partition by dw.doctor_id, dw.week_no) as visits_per_week
       from doctors_weeks as dw
     )
     select dv.doctor_id
          , dv.visits_total_number::int
-         , avg(dv.visits_per_week) as avg_visits_per_week
+         , sum(dv.visits_per_week)
+           /
+           num_weeks_between_dates as avg_visits_per_week
     from doctors_visits as dv
     group by dv.doctor_id, dv.visits_total_number;
 end;

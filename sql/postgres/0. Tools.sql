@@ -129,3 +129,19 @@ create or replace function tools.absolute_number_of_weeks(end_date date)
 returns int immutable as $$ begin
   return tools.number_of_weeks_between('epoch'::date, end_date);
 end; $$ language plpgsql;
+
+create or replace function tools.get_age(birth_date date)
+returns int as $$ begin
+  return date_part('year', age(birth_date));
+end; $$ language plpgsql;
+
+create or replace function tools.charge(age int, appointment_count int)
+returns money as $$ begin
+return
+  case
+    when age < 50 and appointment_count < 3 then money(200)
+    when age < 50 and appointment_count >= 3 then money(250)
+    when age >= 50 and appointment_count < 3 then money(400)
+    when age >= 50 and appointment_count >= 3 then money(500)
+  end;
+end; $$ language plpgsql;

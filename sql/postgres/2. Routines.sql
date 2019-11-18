@@ -19,7 +19,7 @@ begin
            , a.patient_id
            , a.datetime
            , a.location
-           , rank() over (partition by a.datetime::date order by a.datetime::date desc) as rank
+           , rank() over (order by a.datetime::date desc) as rank
       from meeting.appointments as a
       where a.patient_id = pat_id
     )

@@ -143,3 +143,60 @@ select sum(tools.charge(age, appointments_count))
 from
   collapsed_data;
 $$;
+
+create or replace function usr.get_experiences_doctors()
+  returns table
+          (
+            doctor_id          int,
+            total_appointments numeric,
+            first_name         varchar(255),
+            last_name          varchar(255),
+            email              varchar(255),
+            birth_date         date,
+            is_dead            bool
+          )
+  language sql
+as
+$$
+with
+  yearly_data as
+    (
+      select
+        doctor_id
+      , count(id)                   as appointments_count
+      , date_part('year', datetime) as year
+      from
+        meeting.appointments
+      where -- work only with data for last 10 years
+            date_part('year', datetime) between date_part('year', now() - interval '10 years')
+              and date_part('year', now())
+      group by
+        doctor_id, date_part('year', datetime)
+      having -- Ensures that doctor had an appointment with at least 5 patients during the period
+             count(id) >= 5
+    )
+, passed_constraints as
+    (select
+       doctor_id
+     , sum(appointments_count) as total_appointments
+     from
+       yearly_data as y
+         join usr.users as u on y.doctor_id = u.id
+     group by
+       doctor_id
+     having
+         sum(appointments_count) >= 100 -- Doctor have in total at least 100 appointments
+     and count(year) = 10 -- Doctor had an appointment with at least 5 patients each year during 10 years
+    )
+select
+  p.doctor_id
+, p.total_appointments
+, u.first_name
+, u.last_name
+, u.email
+, u.birth_date
+, u.is_dead
+from
+  passed_constraints as p
+    join usr.users as u on p.doctor_id = u.id;
+$$;

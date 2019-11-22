@@ -605,7 +605,7 @@ create table if not exists inventory.inventory_items_requests
     default 'Pending'
 , approved_by  int references usr.inventory_managers    null
 , datetime     timestamp                                not null
-    default now() check (datetime >= now())
+    default now() check (datetime <= now())
 -- , units        types.UnitType                           not null
 , quantity     numeric(32, 6)                           not null
 );
@@ -623,7 +623,7 @@ create table if not exists inventory.item_sales
 , quantity      numeric(32, 6) not null
 , cost_per_unit money          not null
 , datetime      timestamp      not null
-    default now() check (datetime >= now())
+    default now() check (datetime <= now())
 , sold_by       int            not null
     references usr.pharmacists
 , invoice_id    int            not null

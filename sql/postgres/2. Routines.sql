@@ -201,3 +201,67 @@ from
   passed_constraints as p
     join usr.users as u on p.doctor_id = u.id;
 $$;
+
+create or replace function usr.frequent_patients(start_date date, end_date date)
+  returns table
+          (
+            patient_id              int,
+            total_appointment_count numeric,
+            first_name              varchar(255),
+            last_name               varchar(255),
+            email                   varchar(255),
+            birth_date              date,
+            is_dead                 bool,
+            insurance_company       varchar(255),
+            insurance_number        varchar(255)
+          )
+  language sql
+as
+$$
+with
+  week_data as
+    (select
+       patient_id
+--   get how many appointments there been during each week from the start date
+     , tools.number_of_weeks_between(start_date, datetime::date) as week_no
+     , count(*)                                                  as appointment_count
+     from
+       meeting.appointments
+     where
+       datetime between start_date and end_date
+     group by
+       patient_id, tools.number_of_weeks_between(start_date,
+                                                 datetime::date)
+     having
+       count(*) >= 2
+--    consider only those who had at least 2 appointments per week
+
+    )
+, result_patients as
+    (
+      select
+        patient_id
+      , sum(appointment_count) as total_appointment_count
+      from
+        week_data
+      group by
+        patient_id
+      having
+        -- 1 month is from 0 to 4 weeks between 2 dates inclusively
+        -- 1 + since function may returns values from 0 to (start+end) div 7
+        count(*) = 1 + tools.number_of_weeks_between(start_date, end_date)
+    )
+select
+  r.patient_id
+, r.total_appointment_count
+, u.first_name
+, u.last_name
+, u.email
+, u.birth_date
+, u.is_dead
+, u.insurance_company
+, u.insurance_number
+from
+  result_patients as r
+    join usr.users as u on r.patient_id = u.id
+$$;

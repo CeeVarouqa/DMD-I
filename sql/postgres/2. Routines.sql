@@ -139,7 +139,7 @@ with
         appointment_counts as a
           join usr.users as u on a.patient_id = u.id
     )
-select sum(tools.charge(age, appointments_count))
+select coalesce(sum(tools.charge(age, appointments_count)), 0::money) as possible_profit
 from
   collapsed_data;
 $$;

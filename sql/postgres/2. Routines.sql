@@ -68,48 +68,48 @@ $$;
 create or replace function meeting.doctors_appointments_report(begin_date date, end_date date)
   returns table
           (
-            doctor_id int
-          , visits_total_number int
-          , avg_visits_per_week numeric
+            doctor_id                            int
+          , day_of_week                          text
+          , time_slot                            time
+          , total_num_appointments_per_time_slot bigint
+          , average_visits_per_time_slot         numeric
           )
   immutable
   language plpgsql
 as
 $$
 declare
-  num_weeks_between_dates int := tools.number_of_weeks_between(begin_date, end_date);
+  num_same_time_slots int := (end_date - begin_date) / 7;
 begin
-  num_weeks_between_dates :=
-    case num_weeks_between_dates
-      when 0 then 1
-      else num_weeks_between_dates
-    end;
-
   return query
-    with doctors_weeks as
+    with dated_appointments as
     (
       select a.doctor_id
-           , tools.number_of_weeks_between(begin_date, datetime::date) as week_no
+           , to_char(a.datetime, 'day') as day_of_week
+           , date_trunc('hour', a.datetime)::time as time_slot
+           , a.patient_id
       from meeting.appointments as a
-      where a.datetime::date between begin_date and end_date
     ),
-    doctors_visits as
+    calculated_appointments as
     (
-      select distinct dw.doctor_id
-           , dw.week_no
-           , count(*) over(partition by dw.doctor_id) as visits_total_number
-           , count(*) over(partition by dw.doctor_id, dw.week_no) as visits_per_week
-      from doctors_weeks as dw
+      select distinct
+             a.doctor_id
+           , a.day_of_week
+           , a.time_slot
+           , count(a.patient_id) over(partition by a.doctor_id
+                                                 , a.day_of_week
+                                                 , a.time_slot) as total_num_appointments_per_time_slot
+      from dated_appointments as a
     )
-    select dv.doctor_id
-         , dv.visits_total_number::int
-         , sum(dv.visits_per_week)
-           /
-           num_weeks_between_dates as avg_visits_per_week
-    from doctors_visits as dv
-    group by dv.doctor_id, dv.visits_total_number;
+    select a.doctor_id
+         , a.day_of_week
+         , a.time_slot
+         , a.total_num_appointments_per_time_slot
+         , (a.total_num_appointments_per_time_slot::numeric / num_same_time_slots) as average_visits_per_time_slot
+    from calculated_appointments as a;
 end;
 $$;
+
 
 create or replace function finance.get_possible_profit_last_month()
   returns money
@@ -143,6 +143,7 @@ select sum(tools.charge(age, appointments_count))
 from
   collapsed_data;
 $$;
+
 
 create or replace function usr.get_experiences_doctors()
   returns table

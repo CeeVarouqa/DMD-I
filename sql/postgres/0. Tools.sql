@@ -147,3 +147,34 @@ return
     when age >= 50 and appointment_count >= 3 then money(500)
   end;
 end; $$ language plpgsql;
+
+
+create or replace function tools.time_slots_for_range(begin_time timestamp, end_time timestamp, time_slot_size interval)
+  returns table
+    (
+      time_slot_begin timestamp
+    , time_slot_end timestamp
+    )
+  immutable
+  language plpgsql
+as
+$$
+begin
+  return query
+    with recursive time_slots_recursive as
+    (
+      select begin_time as time_slot_begin
+           , begin_time + time_slot_size as time_slot_end
+
+      union
+
+      select r.time_slot_end as time_slot_begin
+           , r.time_slot_end + time_slot_size as time_slot_end
+      from time_slots_recursive as r
+      where (r.time_slot_end + time_slot_size) <= end_time
+    )
+    select t.time_slot_begin
+         , t.time_slot_end
+    from time_slots_recursive as t;
+end;
+$$;

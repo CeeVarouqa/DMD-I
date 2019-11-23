@@ -190,6 +190,23 @@ begin
 end;
 $$;
 
+create or replace function tools.is_item_quantity_valid_for_unit(number numeric, unit types.UnitType)
+  returns bool
+  immutable
+  language plpgsql
+as
+$$
+begin
+  return
+    case
+      when number is null then False
+      when unit is null then False
+      when unit = 'Items' then tools.is_int(number)
+      else True
+      end;
+end;
+$$;
+
 create or replace function tools.is_item_quantity_valid(number numeric, item_id int)
   returns bool
   immutable
@@ -207,11 +224,6 @@ begin
   where
     id = item_id;
 
-  return
-    case
-      when unit_type is null then False
-      when unit_type = 'Items' then tools.is_int(number)
-      else True
-      end;
+  return tools.is_item_quantity_valid_for_unit(number, unit_type);
 end;
 $$;

@@ -579,7 +579,7 @@ create table if not exists inventory.inventory_items
   id                serial primary key
 , name              varchar(255)                not null
 , cost_per_unit     money                       not null
-, quantity          numeric(32, 6)              not null check (tools.is_item_quantity_valid(quantity, id))
+, quantity          numeric(32, 6)              not null check (tools.is_item_quantity_valid_for_unit(quantity, units))
 , units             types.UnitType              not null
 , is_consumable     bool                        not null
 , category          types.InventoryItemCategory not null

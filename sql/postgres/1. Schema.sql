@@ -448,8 +448,8 @@ create table if not exists finance.payments
   id                serial primary key
 , datetime          timestamp default now() check ( datetime <= now())
 , type              types.PaymentType not null
-, insurance_company varchar(255) check ( type = 'Insurance' AND insurance_company is not null )
-, insurance_number  varchar(255) check ( type = 'Insurance' AND insurance_number is not null )
+, insurance_company varchar(255) check ( tools.implication(type = 'Insurance', insurance_company is not null) )
+, insurance_number  varchar(255) check ( tools.implication(type = 'Insurance', insurance_number is not null) )
 , accepted_by       int references usr.receptionists (id)
 , pays_for          int references finance.invoices (id) unique
 );

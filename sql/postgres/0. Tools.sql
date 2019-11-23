@@ -119,6 +119,12 @@ returns bool immutable as $$ begin
 end; $$ language plpgsql;
 
 
+create or replace function tools.implication(x bool, y bool)
+returns bool immutable as $$ begin
+  return (not x) or y;
+end; $$ language plpgsql;
+
+
 create or replace function tools.number_of_weeks_between(begin_date date, end_date date)
 returns int immutable as $$ begin
   return (end_date - begin_date) / 7;

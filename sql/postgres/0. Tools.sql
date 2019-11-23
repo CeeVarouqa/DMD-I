@@ -178,3 +178,40 @@ begin
     from time_slots_recursive as t;
 end;
 $$;
+
+create or replace function tools.is_int(number numeric)
+  returns bool
+  immutable
+  language plpgsql
+as
+$$
+begin
+  return number = number::int;
+end;
+$$;
+
+create or replace function tools.is_item_quantity_valid(number numeric, item_id int)
+  returns bool
+  immutable
+  language plpgsql
+as
+$$
+declare
+  unit_type types.UnitType;
+begin
+  select
+    units
+  into unit_type
+  from
+    inventory.inventory_items
+  where
+    id = item_id;
+
+  return
+    case
+      when unit_type is null then False
+      when unit_type = 'Items' then tools.is_int(number)
+      else True
+      end;
+end;
+$$;

@@ -579,13 +579,12 @@ create table if not exists inventory.inventory_items
   id                serial primary key
 , name              varchar(255)                not null
 , cost_per_unit     money                       not null
-, quantity          numeric(32, 6)              not null
+, quantity          numeric(32, 6)              not null check (tools.is_item_quantity_valid(quantity, id))
 , units             types.UnitType              not null
 , is_consumable     bool                        not null
 , category          types.InventoryItemCategory not null
 , need_prescription bool                        not null
 , belongs_to_place  int                         null references ipc.in_patient_clinic_places
-
 , unique (category, name)
 , check ((category = 'In-patient clinic inventory') = (belongs_to_place is not null))
 );
@@ -596,18 +595,18 @@ create table if not exists inventory.inventory_items
 create table if not exists inventory.inventory_items_requests
 (
   id           serial primary key
-, item_id      int not null
+, item_id      int                                   not null
     references inventory.inventory_items
-, requested_by int                                      not null
+, requested_by int                                   not null
     references usr.staff
     check (tools.can_staff_make_item_request(requested_by))
-, status       types.InventoryItemApprovalStatus        not null
+, status       types.InventoryItemApprovalStatus     not null
     default 'Pending'
-, approved_by  int references usr.inventory_managers    null
-, datetime     timestamp                                not null
+, approved_by  int references usr.inventory_managers null
+, datetime     timestamp                             not null
     default now() check (datetime <= now())
--- , units        types.UnitType                           not null
-, quantity     numeric(32, 6)                           not null
+, quantity     numeric(32, 6)                        not null
+    check (tools.is_item_quantity_valid(quantity, item_id))
 );
 
 -------------------------------------------------------------------------------
@@ -615,12 +614,12 @@ create table if not exists inventory.inventory_items_requests
 -------------------------------------------------------------------------------
 create table if not exists inventory.item_sales
 (
-  id serial primary key
-, item_id      int not null
+  id            serial primary key
+, item_id       int            not null
     references inventory.inventory_items
     check (tools.is_inventory_item_valid_for_sale(item_id))
--- , units         types.UnitType not null
 , quantity      numeric(32, 6) not null
+    check (tools.is_item_quantity_valid(quantity, item_id))
 , cost_per_unit money          not null
 , datetime      timestamp      not null
     default now() check (datetime <= now())

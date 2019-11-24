@@ -247,7 +247,6 @@ with
       group by
         patient_id
       having
-        -- 1 month is from 0 to 4 weeks between 2 dates inclusively
         -- 1 + since function may returns values from 0 to (start+end) div 7
         count(*) = 1 + tools.number_of_weeks_between(start_date, end_date)
     )

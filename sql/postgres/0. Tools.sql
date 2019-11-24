@@ -13,6 +13,16 @@ returns bool as $$ begin
   );
 end; $$ language plpgsql;
 
+create or replace function tools.xor(x bool, y bool)
+returns bool immutable as $$ begin
+  return (not x and y) or (x and not y);
+end; $$ language plpgsql;
+
+
+create or replace function tools.implication(x bool, y bool)
+returns bool immutable as $$ begin
+  return (not x) or y;
+end; $$ language plpgsql;
 
 create or replace function tools.is_chat_private(chat_id integer)
     returns bool
@@ -111,19 +121,6 @@ returns bool immutable as $$ begin
       and datetime between s.check_in_datetime and coalesce(s.check_out_datetime, timestamp 'infinity')
   );
 end; $$ language plpgsql;
-
-
-create or replace function tools.xor(x bool, y bool)
-returns bool immutable as $$ begin
-  return (not x and y) or (x and not y);
-end; $$ language plpgsql;
-
-
-create or replace function tools.implication(x bool, y bool)
-returns bool immutable as $$ begin
-  return (not x) or y;
-end; $$ language plpgsql;
-
 
 create or replace function tools.number_of_weeks_between(begin_date date, end_date date)
 returns int immutable as $$ begin

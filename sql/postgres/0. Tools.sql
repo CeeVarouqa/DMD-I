@@ -60,7 +60,7 @@ declare
   is_user_dead bool;
 begin
     select is_dead into is_user_dead from usr.users where id = user_id;
-    return ((employment_start < employment_end) AND ((NOT is_user_dead) OR (employment_end <= now()))); -- (emp_start < emp_end) and (user_dead) -> (emp_end <= now())
+    return ((employment_start < employment_end) AND (tools.implication(is_user_dead, employment_end <= now())));
 end; $$ language plpgsql;
 
 create or replace function tools.is_inventory_item_valid_for_sale(
@@ -228,5 +228,26 @@ begin
     id = item_id;
 
   return tools.is_item_quantity_valid_for_unit(number, unit_type);
+end;
+$$;
+
+create or replace function tools.can_item_be_taken(requested_amount numeric, item_id int)
+  returns bool
+  immutable
+  language plpgsql
+as
+$$
+declare
+  available_amount numeric;
+begin
+  select
+    quantity
+  into available_amount
+  from
+    inventory.inventory_items
+  where
+    id = item_id;
+
+  return available_amount <= requested_amount;
 end;
 $$;

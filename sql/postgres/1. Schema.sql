@@ -579,7 +579,8 @@ create table if not exists inventory.inventory_items
   id                serial primary key
 , name              varchar(255)                not null
 , cost_per_unit     money                       not null
-, quantity          numeric(32, 6)              not null check (tools.is_item_quantity_valid_for_unit(quantity, units))
+, quantity          numeric(32, 6)              not null
+    check (tools.is_item_quantity_valid_for_unit(quantity, units) and quantity >= 0)
 , units             types.UnitType              not null
 , is_consumable     bool                        not null
 , category          types.InventoryItemCategory not null
@@ -602,11 +603,14 @@ create table if not exists inventory.inventory_items_requests
     check (tools.can_staff_make_item_request(requested_by))
 , status       types.InventoryItemApprovalStatus     not null
     default 'Pending'
+    check ((status='Pending' and approved_by is null) or (status!='Pending' and approved_by is not null))
 , approved_by  int references usr.inventory_managers null
+--     check (tools.implication(status = 'Approved', tools.can_item_be_taken(quantity, item_id)))
+--     todo: If we will make a backup, it will copy the latest values of items.quantity and then insertion into sales and request will violate constraint even it was ok on creation
 , datetime     timestamp                             not null
     default now() check (datetime <= now())
 , quantity     numeric(32, 6)                        not null
-    check (tools.is_item_quantity_valid(quantity, item_id))
+    check (tools.is_item_quantity_valid(quantity, item_id) and quantity >0)
 );
 
 -------------------------------------------------------------------------------
@@ -619,7 +623,9 @@ create table if not exists inventory.item_sales
     references inventory.inventory_items
     check (tools.is_inventory_item_valid_for_sale(item_id))
 , quantity      numeric(32, 6) not null
-    check (tools.is_item_quantity_valid(quantity, item_id))
+    check (tools.is_item_quantity_valid(quantity, item_id) and quantity >0)
+--     check (tools.is_item_quantity_valid(quantity, item_id) and tools.can_item_be_taken(quantity, item_id))
+--     todo: If we will make a backup, it will copy the latest values of items.quantity and then insertion into sales and request will violate constraint even it was ok on creation
 , cost_per_unit money          not null
 , datetime      timestamp      not null
     default now() check (datetime <= now())
@@ -704,7 +710,8 @@ create table if not exists medical_data.analyses
   id                 serial primary key
 , type               types.AnalysisType   not null
 , status             types.AnalysisStatus not null default 'Collected'
-, result             text
+, result             text                 null
+    check ((status='Collected' and result is null ) or (status='Proceeded'and result is not null))
 , assigned_invoice   int                  not null references finance.invoices(id)
 , proceeded_by       int                  null references usr.lab_technicians (id)
 , requested_by       int                  not null references usr.patients (id)

@@ -164,7 +164,7 @@ with
     (
       select
         doctor_id
-      , count(id)                   as appointments_count
+      , count(*)                    as appointments_count
       , date_part('year', datetime) as year
       from
         meeting.appointments
@@ -174,7 +174,7 @@ with
       group by
         doctor_id, date_part('year', datetime)
       having -- Ensures that doctor had an appointment with at least 5 patients during the period
-             count(id) >= 5
+             count(distinct patient_id) >= 5
     )
 , passed_constraints as
     (select

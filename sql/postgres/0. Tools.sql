@@ -1,5 +1,24 @@
 create schema if not exists tools;
 
+drop function if exists tools.get_sequences;
+create or replace function tools.get_sequences()
+  returns table
+          (
+            schema   information_schema.sql_identifier,
+            name     information_schema.sql_identifier,
+            fullname text
+          )
+as
+$$
+begin
+  return query SELECT
+    sequence_schema                             as schema
+  , sequence_name                               as name
+  , concat(sequence_schema, '.', sequence_name) as fullname
+  FROM
+    information_schema.sequences;
+end;
+$$ language plpgsql;
 
 create or replace function tools.exists_type(typename name)
 returns bool as $$ begin

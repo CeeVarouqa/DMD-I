@@ -346,7 +346,7 @@ create table if not exists msg.messages
 
 
 -------------------------------------------------------------------------------
--- msg.participate
+-- msg.chats_participants
 -------------------------------------------------------------------------------
 create table if not exists msg.chats_participants
 (
@@ -434,10 +434,13 @@ create schema if not exists finance;
 create table if not exists finance.invoices
 (
   id       serial primary key
-, datetime timestamp default now() check ( datetime <= now() )
-, amount   money                            not null check (amount > 0.0::money)
-, text     text                             null
-, paid_by  int references usr.patients (id) not null
+, datetime timestamp not null
+    default now() check ( datetime <= now() )
+, amount   money not null
+    check (amount > 0.0::money)
+, text     text null
+, paid_by  int  not null
+    references usr.patients (id)
 );
 
 -------------------------------------------------------------------------------

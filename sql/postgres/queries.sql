@@ -22,4 +22,8 @@ from usr.frequent_patients((now() - interval '1 month')::date,'now'::date);
 select * from finance.get_possible_profit_last_month() as profit_last_month;
 
 -- Query 5
-select * from usr.get_experiences_doctors();
+select * from usr.get_experiences_doctors(
+  patients_per_year := 5,
+  patients_total := 100,
+  years_period := 10
+  );

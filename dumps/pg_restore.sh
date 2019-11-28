@@ -1,0 +1,1 @@
+psql -p5432 -U postgres -a -f ./pg_dump.sql

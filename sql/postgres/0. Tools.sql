@@ -84,7 +84,8 @@ returns bool immutable as $$ begin
   return exists(
     select *
     from usr.users_roles as ur
-    where ur.is_doctor or ur.is_nurse or ur.is_lab_technician or ur.is_admin
+    where ur.user_id = staff_id
+      and (ur.is_doctor or ur.is_nurse or ur.is_lab_technician or ur.is_admin)
   );
 end; $$ language plpgsql;
 

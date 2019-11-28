@@ -145,7 +145,11 @@ from
 $$;
 
 
-create or replace function usr.get_experiences_doctors()
+create or replace function usr.get_experiences_doctors(
+patients_per_year int, -- 5
+patients_total int, -- 100
+years_period int -- 10
+)
   returns table
           (
             doctor_id          int,
@@ -169,12 +173,12 @@ with
       from
         meeting.appointments
       where -- work only with data for last 10 years
-            date_part('year', datetime) between date_part('year', now() - interval '10 years')
+            date_part('year', datetime) between date_part('year', now() - make_interval(years := years_period))
               and date_part('year', now())
       group by
         doctor_id, date_part('year', datetime)
       having -- Ensures that doctor had an appointment with at least 5 patients during the period
-             count(distinct patient_id) >= 5
+             count(distinct patient_id) >= patients_per_year
     )
 , passed_constraints as
     (select
@@ -186,8 +190,8 @@ with
      group by
        doctor_id
      having
-         sum(appointments_count) >= 100 -- Doctor have in total at least 100 appointments
-     and count(year) = 10 -- Doctor had an appointment with at least 5 patients each year during 10 years
+         sum(appointments_count) >= patients_total -- Doctor have in total at least 100 appointments
+     and count(year) = years_period -- Doctor had an appointment with at least 5 patients each year during 10 years
     )
 select
   p.doctor_id

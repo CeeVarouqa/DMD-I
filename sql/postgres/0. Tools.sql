@@ -1,6 +1,6 @@
+drop schema if exists tools cascade;
 create schema if not exists tools;
 
-drop function if exists tools.get_sequences;
 create or replace function tools.get_sequences()
   returns table
           (
